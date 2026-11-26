@@ -1,7 +1,7 @@
 {
   "name": "mark",
   "version": "1.1.0",
-  "description": "A checkbox that sets one yes-or-no field on one record: done, pinned, read. It says the fact (checked or not) and saves on change; without scripts a Save button beside it does the same. A form, so it works everywhere and comes back to the page it was on.",
+  "description": "A checkbox that sets one yes-or-no field on one record: done, pinned, read. It saves on change; without scripts a Save button beside it does the same.",
   "icon": "✓",
   "use": {"when": "a person wants to change a record's state where they see it: tick a task in a list, pin a note on its page.", "not": "changing several fields at once, which is the inline editor; or anything that is not the person's own content.", "with": "a collection, a record block, a calendar event, or a record's own page."},
   "props": {
@@ -16,8 +16,8 @@
       "context": {"type": "string", "description": "Which record, for screen readers: the record's title. Read after the label."},
       "id": {"type": "string"},
       "checked": {"type": "boolean", "default": false, "description": "Whether the field is true now."},
-      "quiet": {"type": "boolean", "default": false, "description": "Show only the box; the label and context are still its name. For a row whose title beside it already says what the box is."},
-      "ariaLabel": {"type": "string", "description": "A name in place of the label and context. Keep state out of it: the box says checked or not, and a name that changes as it is ticked is heard as a different control."}
+      "quiet": {"type": "boolean", "default": false, "description": "Show only the box, for a row whose title beside it says what it is; label and context still name it."},
+      "ariaLabel": {"type": "string", "description": "A name in place of label and context. Keep state out of it: the box says checked or not."}
     }
   },
   "a11y": {"role": "checkbox", "keyboard": [{"key": "Tab", "does": "reaches the checkbox, and the Save button when scripts are off"}, {"key": "Space", "does": "changes it, which saves when scripts run"}], "states": ["checked"], "wcag": {"target": "AAA", "notes": "A native checkbox inside its label, so the state is announced as a fact (checked or not) with the field's name and, when context is given, the record's title (1.3.1, 4.1.2), and a list of ten is ten different names (2.4.6). It saves on change where it is, focus staying on the box (3.2.2), and says what it saved, Order compost is done, through a status region there from the start (4.1.3), with Undo; a save refused puts the box back and says why. The list catches up once focus leaves it, so a ticked row does not jump from under the person. Without scripts a Save button does the same in one more step. A switch would say the same with less support; a button would say an action rather than the fact."}},

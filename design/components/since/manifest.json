@@ -1,7 +1,7 @@
 {
   "name": "since",
   "version": "1.2.0",
-  "description": "What other people and agents changed while you were away: how many and since when, the newest few each with its Undo, the rest in the log, until you say you have seen it.",
+  "description": "What others changed while the person was away. It says how many and since when, the newest few each with Undo, until they press Got it.",
   "icon": "↺",
   "use": {
     "when": "a person comes back after a while, and others changed things meanwhile.",
@@ -32,7 +32,7 @@
       "count": {
         "type": "integer",
         "minimum": 0,
-        "description": "How many changes others made in all, other people and agents alike, said first: 12 changes by others."
+        "description": "How many changes others made in all, said first: 12 changes by others."
       },
       "at": {
         "type": "string",
@@ -50,7 +50,7 @@
       "id": {
         "type": "string",
         "default": "since",
-        "description": "Names its heading (id-h). Only for showing more than one on a page, as the design page does."
+        "description": "Only for more than one on a page."
       },
       "rest": {
         "type": "string",

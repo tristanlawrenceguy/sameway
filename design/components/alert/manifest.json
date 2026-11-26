@@ -1,7 +1,7 @@
 {
   "name": "alert",
   "version": "1.0.0",
-  "description": "A short message that needs attention: status, success, warning, or error. Not for long content.",
+  "description": "A short message that needs attention, its kind info, success, warning or danger. Not for long content.",
   "use": { "when": "something needs attention now: a failure, a warning before an action, or a result the person waited for.", "not": "content that stays on the page, a heading, or anything a person did not need to be interrupted for.", "with": "a status region for what changes over time; text for anything longer than two sentences." },
   "props": {
     "type": "object",
@@ -10,12 +10,12 @@
     "properties": {
       "message": { "type": "string", "format": "multiline", "minLength": 1 },
       "kind": { "type": "string", "enum": ["info", "success", "warning", "danger"], "default": "info" },
-      "title": { "type": "string", "description": "Optional short title, a heading before the message." },
+      "title": { "type": "string", "description": "A short heading before the message." },
       "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 2, "description": "Where the title sits in the page outline." },
-      "live": { "type": "boolean", "default": false, "description": "Announce it: for a message put on the page after it loaded, or an action's outcome. A message present when the page loads is not announced whatever its role." },
+      "live": { "type": "boolean", "default": false, "description": "Announce it: only for a message that arrives on a page already open, such as an action's outcome." },
       "id": { "type": "string" },
-      "icon": { "type": "string", "description": "A mark to show instead of the kind's own (ℹ, ✓, ⚠, or a circled ! for an error). Hidden from screen readers, which hear the kind as a word." },
-      "dismiss": { "type": "boolean", "description": "When true, renders a close button with data-dismiss attribute." }
+      "icon": { "type": "string", "description": "A mark in place of the kind's own (ℹ ✓ ⚠ !). Screen readers hear the kind as a word instead." },
+      "dismiss": { "type": "boolean", "description": "Show a close button." }
     }
   },
   "a11y": {

@@ -1,7 +1,7 @@
 {
   "name": "status",
   "version": "1.0.0",
-  "description": "Tells people and machines whether something is happening: idle, working, done, or error. A live region, so screen readers announce changes; data-state so agents can read them.",
+  "description": "Tells people and machines whether something is happening: idle, working, done, or error. Screen readers announce its changes.",
   "icon": "◐",
   "use": { "when": "something is happening or has just finished and people should know without looking.", "not": "content, or anything a person reads rather than waits for.", "with": "the chat composer, which uses it." },
   "props": {
@@ -11,8 +11,8 @@
     "properties": {
       "message": { "type": "string", "minLength": 1, "description": "What is happening, in plain words: 'Assistant is working'." },
       "state": { "type": "string", "enum": ["idle", "working", "done", "error"], "default": "idle" },
-      "said": { "type": "string", "description": "Read out after the message but not drawn: the first words of a reply, so a person who cannot see it arrive hears what it says while the chip stays short." },
-      "id": { "type": "string", "description": "Required when a form's enhance script should update this status while a request is in flight." }
+      "said": { "type": "string", "description": "Read out after the message, not shown: the first words of a reply, for someone who cannot see it arrive." },
+      "id": { "type": "string", "description": "Needed for a form's script to update it while a request is in flight." }
     }
   },
   "a11y": {

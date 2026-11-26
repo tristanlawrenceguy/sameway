@@ -1,7 +1,7 @@
 {
   "name": "text",
   "version": "1.0.0",
-  "description": "Text with structure: paragraphs, headings, lists, emphasis, links, code and captioned tables, written as Markdown. Blank lines start a new paragraph.",
+  "description": "Text with structure, its content written as Markdown: paragraphs, headings, lists, emphasis, links, code and captioned tables.",
   "icon": "¶",
   "use": { "when": "sentences, and anything longer: an explanation, an introduction, a note with its own headings and lists; frame bare.", "not": "a title, which is a heading, or short items, which are a list.", "with": "a heading before it when it starts a section." },
   "props": {
@@ -9,9 +9,9 @@
     "additionalProperties": false,
     "required": ["content"],
     "properties": {
-      "content": { "type": "string", "format": "multiline", "minLength": 1, "description": "Markdown: paragraphs, headings with #, lists with - or 1., *emphasis*, [links](/t/note), code, and tables. A line starting Table: just above a table is its caption." },
-      "level": { "title": "Heading level of a # line", "type": "integer", "minimum": 2, "maximum": 6, "default": 2, "description": "What a # heading in the content becomes, so the text fits the page outline: 2 on the canvas, 3 or 4 inside something that already has a heading." },
-      "muted": { "title": "Quieter text", "type": "boolean", "default": false, "description": "Lower-emphasis text such as a note or caption. Still meets 7:1 contrast." },
+      "content": { "type": "string", "format": "multiline", "minLength": 1, "description": "Markdown; a blank line starts a paragraph. A line starting Table: just above a table is its caption." },
+      "level": { "title": "Heading level of a # line", "type": "integer", "minimum": 2, "maximum": 6, "default": 2, "description": "What a # heading becomes: 2 on the canvas, 3 or 4 under a heading." },
+      "muted": { "title": "Quieter text", "type": "boolean", "default": false, "description": "Quieter text, such as a note or caption." },
       "id": { "type": "string" }
     }
   },
