@@ -30,6 +30,9 @@ var heardAt = map[string]any{"type": "string", "description": "Where in the reco
 var meetingOps = []Op{{Title: "Write up a meeting",
 	Doing: saying("Writing up the meeting"),
 	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
+		if strings.TrimSpace(a.Summary) == "" {
+			return fail("give the summary, and the decisions and tasks: you write them, from the recording's transcript (get_record on the file) or the notes")
+		}
 		return s.writeUpMeeting(a.Event, a.Recording, a.Summary, a.Decisions, a.Tasks)
 	},
 	Tool: llm.Tool{Name: "write_up_meeting",
@@ -112,11 +115,10 @@ func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tas
 		if note := said(t.At); note != "" {
 			f["notes"] = "Came up" + note + "."
 		}
-		if t.Due != "" {
-			f["due"] = t.Due
-		}
-		if t.For != "" {
-			f["for"] = t.For
+		for k, v := range map[string]string{"due": t.Due, "for": t.For} {
+			if v != "" {
+				f[k] = v
+			}
 		}
 		rec, _, err := records.Write(s.Store, "created", "task", "", f)
 		if err != nil {
