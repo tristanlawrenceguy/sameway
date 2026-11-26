@@ -30,10 +30,8 @@ func (s *Service) mqttAction(_ context.Context, rec *store.Record, title string)
 	if err := s.Publish(topic, payload); err != nil {
 		return fail("action %s: %v", title, err)
 	}
-	return Result{
-		Text:   fmt.Sprintf("%s published %q to %s; whether the device acted on it is not known", title, payload, topic),
-		Change: &records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title + " (" + topic + ")", Href: relate.Page(records.ActionType, rec.ID)},
-	}
+	c := ran(rec, title+" ("+topic+")")
+	return Result{Text: fmt.Sprintf("%s published %q to %s; whether the device acted on it is not known", title, payload, topic), Change: &c}
 }
 
 // SwitchDevice turns a device on or off by the way its topic is changed

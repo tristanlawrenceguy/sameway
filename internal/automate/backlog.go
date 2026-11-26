@@ -6,7 +6,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -40,7 +39,7 @@ func (s *Service) runOverAll(ctx context.Context, action *store.Record) Result {
 			todo = append(todo, r)
 		}
 	}
-	ran := records.Change{Action: "ran", Component: records.ActionType, ID: action.ID, Detail: title, Href: relate.Page(records.ActionType, action.ID)}
+	ran := ran(action, title)
 	if len(todo) == 0 {
 		return Result{Text: fmt.Sprintf("%s: every %s it goes through is already done", title, schema.Words(t.Name)), Change: &ran}
 	}
