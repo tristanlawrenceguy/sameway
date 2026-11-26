@@ -11,11 +11,11 @@ import (
 // words, because it is the same code on the same records. What reaches
 // beyond the workspace is not tried, since a copy cannot hold it back.
 
-var tryTool = tool{Name: "try", Description: "Try a change without making it: name a tool and its arguments, and it runs on a throwaway copy of the workspace and answers what that tool would. A refusal is the refusal you would get; a success is what would have happened, and nothing has. Ids it gives belong to the copy. Not for the tools that reach outside the workspace (open world): running an action, updating Sameway, making, opening or restoring a workspace.",
+var tryTool = tool{Name: "try", Description: "Try a change without making it: the tool runs on a throwaway copy of the workspace and this answers what it would. A refusal is the refusal you would get; a success changed nothing, and ids it gives belong to the copy. Not for tools that reach outside the workspace (open world), such as running an action or updating Sameway.",
 	InputSchema: map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"name":      map[string]any{"type": "string", "description": "The tool to try, such as create_record or add_component."},
+			"name":      str("The tool to try, such as create_record or add_component."),
 			"arguments": map[string]any{"type": "object", "description": "Its arguments, as you would send them to it."},
 		},
 		"required":             []string{"name", "arguments"},

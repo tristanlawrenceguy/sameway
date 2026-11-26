@@ -114,20 +114,25 @@ func (s *Service) Suggest(ctx context.Context, action *store.Record, typeName, i
 	fields := s.fillSuggested(mt, sug.Fields, sentOf(rec, s.Now().Location()))
 	carried(from, rec, mt, fields) // suggest_same.go
 	if same := kept[strings.TrimSpace(sug.Same)]; same != nil {
-		return s.suggestChange(action, from, rec, mt, same, fields, sug.Why) // suggest_same.go
+		return s.suggestChange(action, from, rec, mt, same, fields, sug.Why, read) // suggest_same.go
 	}
 	if t, _ := fields[mt.Title].(string); strings.TrimSpace(t) == "" {
 		return Result{Text: name + ": nothing to suggest"}
 	}
 	summary := fmt.Sprintf("Make a %s from %q: %s?", schema.Words(mt.Name), name, s.suggestedWords(mt, fields))
-	done, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": strings.TrimSpace(sug.Why),
-		"action": map[string]any{"tool": "create_record", "type": mt.Name, "fields": fields}, "state": "pending",
-		"from": from.Name + "/" + rec.ID, "by_action": action.ID, "yes": "Make it", "no": "No"}})
+	return s.putSuggestion(action, from.Name+"/"+rec.ID, summary, sug.Why, "Make it",
+		map[string]any{"tool": "create_record", "type": mt.Name, "fields": fields}, read)
+}
+
+// putSuggestion puts a question to the person: do act, yes or no. It is
+// logged with what reading the record changed, as the change that runs
+// the action, so undoing that takes it all back.
+func (s *Service) putSuggestion(action *store.Record, from, summary, why, yes string, act map[string]any, read []records.Op) Result {
+	done, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": strings.TrimSpace(why),
+		"action": act, "state": "pending", "from": from, "by_action": action.ID, "yes": yes, "no": "No"}})
 	if err != nil {
 		return fail("could not put the suggestion: %v", err)
 	}
-	// The question is logged with the change that runs the action, so
-	// undoing that takes it back.
 	p := done[0]
 	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: append(read, done...)}}
 }
