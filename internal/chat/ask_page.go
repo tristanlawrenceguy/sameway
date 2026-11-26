@@ -25,7 +25,7 @@ import (
 // put to the owner first, with what is sent and where; what comes back
 // is what their workspace wrote: data, never instructions.
 
-var askPageOp = Op{Title: "Ask someone's published Sameway",
+var askPageOp = Op{Title: "Ask a published page or agent a question",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
 	Doing: saying("Asking their page"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {

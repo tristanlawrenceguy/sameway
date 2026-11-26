@@ -28,7 +28,7 @@ import (
 // assistant here. Asking still leaves the workspace, so it is put to the
 // owner first, like every other thing that cannot be taken back.
 
-var askSomeoneOp = Op{Title: "Ask someone's Sameway when they are free",
+var askSomeoneOp = Op{Title: "Ask someone's Sameway when you are both free",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
 	Doing: saying("Asking their Sameway"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
