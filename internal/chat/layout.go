@@ -1,6 +1,10 @@
 package chat
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+	"strings"
+)
 
 // look is how a block sits on the canvas: its width, its order, and how
 // much surface it brings. All optional, all independent of its props.
@@ -13,56 +17,59 @@ type look struct {
 	SetCanvas bool
 }
 
+// noCanvas is the refusal of a tab that is not there.
+func noCanvas(id string) error {
+	return fmt.Errorf("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", id)
+}
+
+// place is apply for a call that may name a tab, which must be there.
+func (s *Service) place(l look, fields map[string]any) ([]string, error) {
+	if l.SetCanvas && !s.HasCanvas(l.Canvas) {
+		return nil, noCanvas(l.Canvas)
+	}
+	return l.apply(fields)
+}
+
+// What a block's frame, tone, region and size may be, for the tools'
+// schemas and for apply.
+var (
+	frames  = []string{"card", "bare"}
+	tones   = []string{"none", "accent", "success", "warning", "danger", "info"}
+	regions = []string{"main", "left", "right", "header", "footer"}
+	sizes   = []string{"full", "compact", "icon"}
+)
+
 // apply writes the layout fields that were given, and describes them.
 func (l look) apply(fields map[string]any) ([]string, error) {
 	var what []string
+	set := func(field string, v any) {
+		fields[field] = v
+		what = append(what, fmt.Sprintf("%s %v", field, v))
+	}
 	if l.Span != nil {
 		if *l.Span < 1 || *l.Span > 12 {
 			return nil, fmt.Errorf("span must be between 1 and 12, got %d", *l.Span)
 		}
-		fields["span"] = *l.Span
-		what = append(what, fmt.Sprintf("span %d", *l.Span))
+		set("span", *l.Span)
 	}
 	if l.Position != nil {
-		fields["position"] = *l.Position
-		what = append(what, fmt.Sprintf("position %d", *l.Position))
+		set("position", *l.Position)
 	}
-	if l.Frame != "" {
-		if l.Frame != "card" && l.Frame != "bare" {
-			return nil, fmt.Errorf("frame must be card or bare, got %q", l.Frame)
+	for _, c := range []struct {
+		field, got string
+		allowed    []string // nil for tone, which the block's own schema checks
+	}{{"frame", l.Frame, frames}, {"tone", l.Tone, nil}, {"region", l.Region, regions}, {"size", l.Size, sizes}} {
+		if c.got == "" {
+			continue
 		}
-		fields["frame"] = l.Frame
-		what = append(what, "frame "+l.Frame)
-	}
-	if l.Tone != "" {
-		fields["tone"] = l.Tone
-		what = append(what, "tone "+l.Tone)
-	}
-	if l.Region != "" {
-		switch l.Region {
-		case "main", "left", "right", "header", "footer":
-		default:
-			return nil, fmt.Errorf("region must be main, left, right, header, or footer, got %q", l.Region)
+		if c.allowed != nil && !slices.Contains(c.allowed, c.got) {
+			return nil, fmt.Errorf("%s must be one of %s, got %q", c.field, strings.Join(c.allowed, ", "), c.got)
 		}
-		fields["region"] = l.Region
-		what = append(what, "region "+l.Region)
-	}
-	if l.Size != "" {
-		switch l.Size {
-		case "full", "compact", "icon":
-		default:
-			return nil, fmt.Errorf("size must be full, compact, or icon, got %q", l.Size)
-		}
-		fields["size"] = l.Size
-		what = append(what, "size "+l.Size)
+		set(c.field, c.got)
 	}
 	if l.SetCanvas {
 		fields["canvas"] = l.Canvas
-		if l.Canvas == "" {
-			what = append(what, "canvas Home")
-		} else {
-			what = append(what, "canvas "+l.Canvas)
-		}
+		what = append(what, "canvas "+orWord(l.Canvas, "Home"))
 	}
 	return what, nil
 }
