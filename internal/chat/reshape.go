@@ -39,7 +39,7 @@ var changeFieldOp = Op{Title: "Change or remove a field", Traits: Traits{Destruc
 	},
 	Tool: llm.Tool{
 		Name:        "change_field",
-		Description: "Change a content type the person already has: add_choice gives a pick-list (enum) another choice; label renames how a field, or with value one of its choices, is shown (what is stored stays); hide takes a field, or with no field the whole type, off the pages and out of your hands, keeping everything it holds; show brings it back; delete removes a field, or with no field the whole type and its records, for good. Delete is always put to the person as a question, with hiding offered; nothing is deleted until they choose. When someone asks to remove something, offer hiding.",
+		Description: "Change a content type the person already has. change is one of: add_choice gives a pick-list (enum) another choice; label renames how a field, or with value one of its choices, is shown (what is stored stays); hide takes a field, or with no field the whole type, off the pages and out of your hands, keeping everything it holds; show brings it back; delete removes a field, or with no field the whole type and its records, for good. Delete is always put to the person as a question, with hiding offered; nothing is deleted until they choose. When someone asks to remove something, offer hiding.",
 		Schema: obj(map[string]any{
 			"type":   map[string]any{"type": "string", "description": "The content type."},
 			"field":  map[string]any{"type": "string", "description": "The field; leave out to hide, show or delete the whole type."},

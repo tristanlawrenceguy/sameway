@@ -52,7 +52,7 @@ var shapeOps = []Op{
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addField(a.Type, fieldDef{Name: a.Name, Kind: a.Kind, Description: a.Description, Values: a.Values, To: a.To, Required: a.Required, Default: a.Default})
 		},
-		Tool: llm.Tool{Name: "add_field", Description: "Add a property to a content type, for everyone: a due date on notes, a priority on tasks. Records already there read as its default, or nothing; the answer says what they got.",
+		Tool: llm.Tool{Name: "add_field", Description: "Add a property to a content type, for everyone, by type, name and kind: a due date on notes is a datetime, a priority on tasks an enum with its values. Records already there read as its default, or nothing; the answer says what they got.",
 			Schema: obj(addFieldProps(), "type", "name", "kind")}},
 	{Title: "Add a kind of record",
 		Doing: reshaping,
