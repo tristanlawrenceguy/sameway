@@ -18,15 +18,15 @@ import (
 // model reads at the start of a turn and after every write, it is in front
 // of the model when it acts.
 
-// clutter is what is wrong with each block of a tab that should go or be
+// Clutter is what is wrong with each block of a tab that should go or be
 // fixed, by id: it cannot be shown, and why; or it is the same as an
-// earlier one.
-func (s *Service) clutter(recs []*store.Record) map[string]string {
+// earlier one. It is for a page that offers the person to tidy it.
+func (s *Service) Clutter(recs []*store.Record) map[string]string {
 	out, _ := s.blockState(recs)
 	return out
 }
 
-// blockState is clutter, and what each block that can be shown shows now
+// blockState is Clutter, and what each block that can be shown shows now
 // ("4 tasks, not done, by due"; "nothing yet"), from one resolving of each:
 // the listing gives the model what the person sees, not only the props.
 func (s *Service) blockState(recs []*store.Record) (bad, shows map[string]string) {
@@ -94,6 +94,3 @@ func clutterProblems(recs []*store.Record, bad map[string]string) []string {
 	}
 	return out
 }
-
-// Clutter is clutter for a page that offers the person to tidy it.
-func (s *Service) Clutter(recs []*store.Record) map[string]string { return s.clutter(recs) }

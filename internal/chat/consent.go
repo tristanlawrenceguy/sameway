@@ -2,14 +2,12 @@ package chat
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/automate"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/trim"
 )
 
 // What the assistant does is either reversible, and then it just does it
@@ -162,54 +160,17 @@ func (s *Service) askSetting(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
 	return s.ask(q, map[string]any{"tool": "set_setting", "key": key, "value": value}), true
 }
 
-// askAction is run_action's question, for an action that reaches outside.
+// askAction is run_action's question, for an action that reaches
+// outside. One inside the workspace is undone like any change; one with
+// nowhere to send, or a command that would be refused or has not been
+// accepted and so asks on its own card, is left to Run, which says so.
 func (s *Service) askAction(a toolArgs, _ llm.ToolCall) (toolResult, bool) {
-	id := a.ID
-	rec, err := s.Store.Get(records.ActionType, id)
-	if err != nil {
-		return toolResult{}, false // Run says there is no such action
+	rec, err := s.Store.Get(records.ActionType, a.ID)
+	if err != nil || automate.Shown(rec) == "" || rec.Fields["kind"] == "command" && !s.Automate.Runs(rec) {
+		return toolResult{}, false
 	}
-	title, _ := rec.Fields["title"].(string)
-	press := "The assistant wants to press your " + quoted(title) + " button now."
-	var q question
-	switch kind, _ := rec.Fields["kind"].(string); kind {
-	case "arrangement", "message", "classify", "suggest":
-		return toolResult{}, false // inside the workspace, and undone like any change
-	case "command":
-		line, _ := rec.Fields["command"].(string)
-		// A command that would be refused, or that has not been
-		// accepted and so asks on its own card, is left to Run.
-		if !s.Automate.Runs(rec) {
-			return toolResult{}, false
-		}
-		q = question{"Run a program on this computer?",
-			press + " It runs " + strings.TrimSpace(line) + " as you, with access to your files. What it does can't be undone from Sameway.",
-			"Run it", "Don't run it"}
-	case "watch":
-		url, _ := rec.Fields["url"].(string)
-		waits, _ := rec.Fields["watch_for"].(string)
-		q = question{"Read " + host(url) + " for you?",
-			fmt.Sprintf("%s It reads %s, as anyone visiting would, and tells you if it shows: %s. Nothing of yours is sent.", press, url, trim.Clip(waits, 160)),
-			"Read it", "Don't"}
-	case "mqtt":
-		topic, _ := rec.Fields["topic"].(string)
-		payload, _ := rec.Fields["payload"].(string)
-		q = question{"Send a signal to one of your devices?",
-			fmt.Sprintf("%s It tells %s: %q. The device may act on it straight away.", press, topic, trim.Clip(payload, 120)),
-			"Send it", "Don't send"}
-	default:
-		url, _ := rec.Fields["url"].(string)
-		method, _ := rec.Fields["method"].(string)
-		body, _ := rec.Fields["body"].(string)
-		what := "It contacts " + url + "."
-		if body != "" && method != http.MethodGet {
-			what = fmt.Sprintf("It sends this to %s: %q.", url, trim.Clip(body, 160))
-		}
-		q = question{"Send something from Sameway to " + host(url) + "?",
-			press + " " + what + " Once sent, it can't be unsent.",
-			"Send it", "Don't send"}
-	}
-	return s.ask(q, map[string]any{"tool": "run_action", "id": id, "shown": automate.Shown(rec)}), true
+	q := automate.Asks(rec, false)
+	return s.ask(question{q.Ask, q.Detail, q.Yes, q.No}, map[string]any{"tool": "run_action", "id": a.ID, "shown": automate.Shown(rec)}), true
 }
 
 // ask records the question, in the code's words, with the call a Yes runs.
@@ -262,6 +223,3 @@ func privateAddr(addr string) bool {
 func (s *Service) runAgreed(call llm.ToolCall) toolResult {
 	return s.runOp(call, true)
 }
-
-// quoted is a name as a person reads it quoted.
-func quoted(s string) string { return "“" + s + "”" }

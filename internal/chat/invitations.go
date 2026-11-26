@@ -156,8 +156,5 @@ func (s *Service) answer(t interface {
 	name := t.Called(rec.ID, rec.Fields)
 	records.Record(s.Store, "system", records.Change{Action: "answered", Component: records.EventType, ID: rec.ID, Detail: who + " " + a.State, Ops: done})
 	said := fmt.Sprintf("%s %s your invitation to %q.", who, a.State, name)
-	s.Say(said)
-	if s.Automate != nil && s.Automate.Tell != nil {
-		s.Automate.Tell("They answered your invitation", said, "/t/"+records.EventType+"/"+rec.ID)
-	}
+	s.tell("They answered your invitation", said, "/t/"+records.EventType+"/"+rec.ID) // email_conversation.go
 }
