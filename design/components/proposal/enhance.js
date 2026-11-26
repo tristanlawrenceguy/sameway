@@ -1,6 +1,6 @@
 // A proposal's answer is sent without leaving the page.
 //
-// The two buttons are forms that work on their own. With scripts, the
+// The answers are forms that work on their own. With scripts, the
 // answer is sent where the person is: what it did is said through the
 // chat's status, the page follows the change (19-refresh.js), and focus
 // goes to the message box, the next thing to do, since the button that
@@ -47,8 +47,6 @@
       .catch(function () { say("That answer did not go through.", "error"); again(); });
   }
 
-  // A proposal's two buttons are forms that work on their own; with
-  // scripts the answer is sent without leaving the page.
   sw.arm('.sw-proposal [type="submit"]', function (btn) {
     btn.addEventListener("click", function (e) { e.preventDefault(); answer(btn); });
   });

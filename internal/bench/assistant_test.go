@@ -78,6 +78,8 @@ func TestAssistant(t *testing.T) {
 		set = newcomer() // newcomer_test.go
 	case "languages":
 		set = languages() // languages_test.go
+	case "":
+		set = append(set, talks()...) // talk_test.go
 	}
 	var all []result
 	for _, r := range set {

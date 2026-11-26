@@ -20,7 +20,7 @@
       "undoAll": { "type": "string", "description": "Where a form posts to take back every change of this turn at once, newest first, under Changes made. Given only when there are two or more and each can still be undone." },
       "changes": {
         "type": "array",
-        "description": "Canvas changes made during this turn, shown under the text as Changes made. Each is an event, rendered compact: the message says who, so each line starts at its verb. Give each the props of its activity log entry, so a change reads the same here and in the log.",
+        "description": "What this turn changed, shown under the text as Changes made: each an event, compact, with the props of its activity log entry, so a change reads the same here and in the log.",
         "items": {
           "type": "object",
           "additionalProperties": false,

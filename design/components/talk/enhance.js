@@ -17,10 +17,9 @@
 
   function localVoice() {
     if (!window.speechSynthesis) return null;
-    var all = speechSynthesis.getVoices().filter(function (v) { return v.localService; });
     var lang = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-    return all.filter(function (v) { return v.default && v.lang.slice(0, 2).toLowerCase() === lang; })[0] ||
-      all.filter(function (v) { return v.lang.slice(0, 2).toLowerCase() === lang; })[0] || null;
+    var mine = speechSynthesis.getVoices().filter(function (v) { return v.localService && v.lang.slice(0, 2).toLowerCase() === lang; });
+    return mine.filter(function (v) { return v.default; })[0] || mine[0] || null;
   }
   // Long text is read a sentence or so at a time: some browsers stop a
   // single long reading part way.
@@ -44,7 +43,7 @@
     el.hidden = false;
     var toggle = el.querySelector(".sw-talk__toggle"), turn = el.querySelector(".sw-talk__turn");
     var said = el.querySelector(".sw-talk__state"), aloud = el.querySelector("input[type=checkbox]"), novoice = el.querySelector(".sw-talk__novoice");
-    var stream = null, ctx = null, analyser = null, rec = null, chunks = [], timer = null, active = false, voiceWaited = false;
+    var stream = null, ctx = null, analyser = null, rec = null, chunks = [], timer = null, active = false;
     // A page can hold two chats (a canvas's and the side one), each with
     // voice mode; the second checkbox gets its own id, or its label would
     // press the first and it would be a 28px target.
@@ -102,12 +101,10 @@
         analyser = ctx.createAnalyser();
         analyser.fftSize = 1024;
         ctx.createMediaStreamSource(s).connect(analyser);
-        if (!voiceWaited && window.speechSynthesis) { voiceWaited = true; speechSynthesis.getVoices(); }
+        if (window.speechSynthesis) speechSynthesis.getVoices(); // asked for early: the first answer can be empty
         then();
       }, function (e) {
-        active = false;
-        toggle.textContent = "Start voice mode";
-        state("off", e && e.name === "NotAllowedError"
+        stop("Start voice mode", "off", e && e.name === "NotAllowedError"
           ? "The microphone was not allowed, so voice mode cannot listen. It can be allowed in the browser's settings for this site."
           : "The microphone could not be used, so voice mode cannot listen.");
       });
@@ -116,8 +113,7 @@
       if (!active) return;
       if (!stream) { open(listen); return; }
       chunks = [];
-      var type = "";
-      ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4"].some(function (t) { if (MediaRecorder.isTypeSupported(t)) { type = t; return true; } return false; });
+      var type = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4"].filter(function (t) { return MediaRecorder.isTypeSupported(t); })[0];
       rec = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
       rec.addEventListener("dataavailable", function (e) { if (e.data && e.data.size) chunks.push(e.data); });
       rec.start(250);
@@ -200,29 +196,22 @@
       }
       next();
     }
-    function pause(why) {
-      stopRecorder();
-      if (window.speechSynthesis) speechSynthesis.cancel();
-      release();
-      active = false;
-      toggle.textContent = "Continue voice mode";
-      state("paused", why + " The microphone is off. Press Continue voice mode to talk again.");
-    }
-    function end() {
+    // stop lets everything go: the recorder, the reading, the microphone.
+    function stop(label, s, words) {
       active = false;
       stopRecorder();
       if (window.speechSynthesis) speechSynthesis.cancel();
       release();
-      toggle.textContent = "Start voice mode";
-      state("off", "Voice mode is off. The microphone is off.");
+      toggle.textContent = label;
+      state(s, words);
     }
-    function start() {
+    function pause(why) { stop("Continue voice mode", "paused", why + " The microphone is off. Press Continue voice mode to talk again."); }
+    function end() { stop("Start voice mode", "off", "Voice mode is off. The microphone is off."); }
+    toggle.addEventListener("click", function () {
+      if (active) { end(); return; }
       active = true;
       toggle.textContent = "End voice mode";
       listen();
-    }
-    toggle.addEventListener("click", function () {
-      if (active) end(); else start();
     });
     turn.addEventListener("click", function () {
       var s = now();
