@@ -13,6 +13,7 @@ import (
 	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
+	"github.com/tristanlawrenceguy/sameway/internal/schema"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
@@ -72,7 +73,7 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 		if len(names) == 0 {
 			return "only published content can be read here: nothing is published", true, true
 		}
-		return "only published content can be read here: " + strings.Join(names, ", "), true, true
+		return "only published content can be read here: " + schema.Names(names), true, true
 	}
 	// The service as the internet has it, so written_by names nobody.
 	text, isErr := s.App.Chat.For(records.Visitor{Access: records.Public}).Call(name, args)
