@@ -3,6 +3,7 @@ package automate
 import (
 	"cmp"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -55,53 +56,58 @@ func Sends(rec *store.Record) string {
 	return strings.ToUpper(cmp.Or(text("method"), "POST")) + " " + text("url") + "\n" + text("body")
 }
 
+// Asks is the question an action that reaches outside puts to the owner:
+// before the assistant presses it now, or (own) before it may run on its
+// own from then on. It says where it reaches and what it sends, from the
+// action itself, never in a model's words.
+func Asks(rec *store.Record, own bool) Question {
+	text := func(k string) string { v, _ := rec.Fields[k].(string); return v }
+	title := "“" + text("title") + "”"
+	var now, verb, does, yes, no string
+	switch text("kind") {
+	case "command":
+		now, yes, no = "Run a program on this computer?", "Run it", "Don't run it"
+		does = "runs " + strings.TrimSpace(text("command")) + " as you, with access to your files. What it does can't be undone from Sameway."
+	case "watch":
+		now, verb, yes, no = "Read "+hostOf(text("url"))+" for you?", "read "+hostOf(text("url")), "Read it", "Don't"
+		does = fmt.Sprintf("reads %s, as anyone visiting would, and tells you when it shows: %s. Nothing of yours is sent.", text("url"), trim.Clip(text("watch_for"), 160))
+	case "mqtt":
+		now, verb, yes, no = "Send a signal to one of your devices?", "signal a device", "Send it", "Don't send"
+		does = fmt.Sprintf("tells %s: %q. The device may act on it straight away.", text("topic"), trim.Clip(text("payload"), 120))
+	default:
+		now, verb, yes, no = "Send something from Sameway to "+hostOf(text("url"))+"?", "send to "+hostOf(text("url")), "Send it", "Don't send"
+		does = "contacts " + text("url") + "."
+		if text("body") != "" && text("method") != http.MethodGet {
+			does = fmt.Sprintf("sends this to %s: %q.", text("url"), trim.Clip(text("body"), 160))
+		}
+		does += " Once sent, it can't be unsent."
+	}
+	if !own {
+		return Question{now, "The assistant wants to press your " + title + " button now. It " + does, yes, no}
+	}
+	if strings.Contains(does, "{{") {
+		does += " Words in {{ }} are filled in from what set it off."
+	}
+	return Question{"Let your " + title + " button " + verb + " on its own?", "Each time it is set off, without asking again, it " + does, "Yes, let it", "No, don't"}
+}
+
 // unaccepted asks the owner to accept what an action sends on its own,
-// once, and says so; asked is false when it may run.
+// once, and says so; asked is false when it may run. Waiting for a yes is
+// not a failure, as a command's is not: a hook that set it off is told it
+// waits (waiting_for), and the schedule logs no error each hour.
 func (s *Service) unaccepted(rec *store.Record) (Result, bool) {
 	what := Sends(rec)
-	if what == "" {
-		return Result{}, false
-	}
-	if accepted, _ := rec.Fields["accepted"].(string); accepted == what {
+	if what == "" || rec.Fields["accepted"] == what {
 		return Result{}, false
 	}
 	title, _ := rec.Fields["title"].(string)
+	waits := title + " has not been accepted to send on its own yet, so nothing was sent; "
 	if s.asking("accept_action", rec.ID, "") {
-		return Result{Text: title + " has not been accepted to send on its own yet, so nothing was sent; the question is waiting for the owner"}, true
+		return Result{Text: waits + "the question is waiting for the owner"}, true
 	}
-	var q Question
-	switch rec.Fields["kind"] {
-	case "watch":
-		to, _ := rec.Fields["url"].(string)
-		waits, _ := rec.Fields["watch_for"].(string)
-		q = Question{"Let your “" + title + "” button read " + hostOf(to) + " on its own?",
-			fmt.Sprintf("Each time it is set off, without asking again, it reads %s, as anyone visiting would, and tells you when it shows: %s. Nothing of yours is sent.", to, trim.Clip(waits, 160)),
-			"Yes, let it", "No, don't"}
-	case "mqtt":
-		topic, _ := rec.Fields["topic"].(string)
-		payload, _ := rec.Fields["payload"].(string)
-		q = Question{"Let your “" + title + "” button signal a device on its own?",
-			fmt.Sprintf("Each time it is set off, without asking again, it tells %s: %q. The device may act on it straight away.", topic, trim.Clip(payload, 120)),
-			"Yes, let it", "No, don't"}
-	default:
-		to, _ := rec.Fields["url"].(string)
-		body, _ := rec.Fields["body"].(string)
-		detail := "Each time it is set off, without asking again, it contacts " + to + "."
-		if body != "" {
-			detail = fmt.Sprintf("Each time it is set off, without asking again, it sends this to %s: %q.", to, trim.Clip(body, 160))
-		}
-		if strings.Contains(to+body, "{{") {
-			detail += " Words in {{ }} are filled in from what set it off."
-		}
-		q = Question{"Let your “" + title + "” button send to " + hostOf(to) + " on its own?",
-			detail + " Once sent, it can't be unsent.", "Yes, let it", "No, don't"}
-	}
-	// Waiting for a yes is not a failure, as a command's is not: a hook
-	// that set it off is told it waits (waiting_for), and the schedule
-	// logs no error each hour it is still waiting.
-	r := s.Chat.Ask(q, map[string]any{"tool": "accept_action", "id": rec.ID, "shown": what})
+	r := s.Chat.Ask(Asks(rec, true), map[string]any{"tool": "accept_action", "id": rec.ID, "shown": what})
 	if !r.IsErr {
-		r.Text = title + " has not been accepted to send on its own yet, so nothing was sent; " + r.Text
+		r.Text = waits + r.Text
 	}
 	return r, true
 }
@@ -123,9 +129,11 @@ func (s *Service) asking(tool, id, record string) bool {
 	return false
 }
 
+// hostOf is the name of the place an address points at, as a person
+// knows it: example.com for https://example.com/hooks/1.
 func hostOf(to string) string {
-	if u, err := url.Parse(to); err == nil && u.Host != "" {
-		return u.Host
+	if u, err := url.Parse(strings.TrimSpace(to)); err == nil && u.Host != "" {
+		return u.Hostname()
 	}
 	return to
 }

@@ -60,17 +60,17 @@ var recordOps = []Op{
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.importRecords(a.Type, a.File, a.Mapping)
 		},
-		Tool: llm.Tool{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) of contacts, or a mailbox (.mbox) of mail. Each column is matched to a field by name; a column for an email, phone or name links each row to its person, made when new. Use it when the person attaches such a file and wants its contents as records, rather than creating them one by one. Returns how many were made.",
+		Tool: llm.Tool{Name: "import_records", Description: "Make records from a file the person added: a CSV with a header row, a vCard (.vcf) or a mailbox (.mbox). Columns are matched to fields by name; an email, phone or name column links each row to its person, made when new. Returns how many were made.",
 			Schema: obj(map[string]any{
 				"type":    typeArg,
-				"file":    map[string]any{"type": "string", "description": "The id of the file record, from the message it came with or from find_records on file."},
-				"mapping": map[string]any{"type": "object", "description": "Optional: which column feeds which field, as {column: field}. Leave out to match by name.", "additionalProperties": map[string]any{"type": "string"}},
+				"file":    map[string]any{"type": "string", "description": "The file record's id, from the message it came with or find_records on file."},
+				"mapping": map[string]any{"type": "object", "description": "{column: field}; left out, matched by name.", "additionalProperties": map[string]any{"type": "string"}},
 			}, "type", "file")}, Offered: typed},
-	createRecordOp,  // record_ops.go
-	createRecordsOp, // create_records.go
-	updateRecordsOp, // update_records.go
-	updateRecordOp,  // record_ops.go
-	deleteRecordOp,  // delete_record.go
+	createRecordOp, // record_ops.go
+	formerly("create_records", createRecordOp),
+	formerly("update_records", updateRecordOp),
+	updateRecordOp, // record_ops.go
+	deleteRecordOp, // delete_record.go
 	{Title: "Find records", Traits: Traits{ReadOnly: true, Idempotent: true},
 		Access: ForViewers,
 		Core:   true,
@@ -78,23 +78,23 @@ var recordOps = []Op{
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.findRecords(a.Type, a.Query, a.Where, a.Order, a.Limit)
 		},
-		Tool: llm.Tool{Name: "find_records", Description: "List records of a type to get their ids: all of them, those holding every word of the query in their title or words, or those matching where. The same where and order a collection block takes.",
+		Tool: llm.Tool{Name: "find_records", Description: "List a type's records with their ids: all, those whose title or words hold every word of query, or those where matches.",
 			Schema: obj(map[string]any{
 				"type":  typeArg,
-				"query": map[string]any{"type": "string", "description": "Words each record found must hold, in its title or its words, in any order. Leave empty for every record."},
+				"query": map[string]any{"type": "string", "description": "Words to hold, in any order."},
 				"where": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Conditions that must all hold. " + query.Grammar},
-				"order": map[string]any{"type": "string", "description": "A field, or -field for the largest or newest first. Newest first when left out."},
-				"limit": map[string]any{"type": "integer", "description": "How many to list. Defaults to 10."},
+				"order": map[string]any{"type": "string", "description": "A field, or -field for largest or newest first. Newest first when left out."},
+				"limit": map[string]any{"type": "integer", "description": "Defaults to 10."},
 			}, "type")}, Offered: typed},
 	{Title: "Read a record", Traits: Traits{ReadOnly: true, Idempotent: true},
 		Access: ForViewers,
 		Core:   true,
 		Doing:  func(a callArgs) string { return "Reading" + or(an(schema.Words(a.Type)), " a record") },
 		Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.getRecord(a.Type, a.ID) },
-		Tool: llm.Tool{Name: "get_record", Description: "Read one record with every field, by id: a note's body, a file's text. Use it before answering from what a record says. It also returns related: everything the record is joined to — what points at it, what is set about it, what sits beside it under the same parent, what else falls on its day — each with a count and the where that lists them. Their page shows only the counts. When you have a reason to put one in front of the person, send them the page with that connection open: /t/<type>/<id>?show=<key>.",
+		Tool: llm.Tool{Name: "get_record", Description: "Read one record in full, by id: a note's body, a file's text. Use it before answering from what a record says. Its related is everything it is joined to (what points at it, what shares its parent or its day), each with a count and the where that lists them; to show the person one, link /t/<type>/<id>?show=<key>.",
 			Schema: obj(map[string]any{
 				"type": typeArg,
-				"id":   map[string]any{"type": "string", "description": "The record's id, from find_records or from a page URL /t/<type>/<id>."},
+				"id":   map[string]any{"type": "string", "description": "From find_records, or a page's /t/<type>/<id>."},
 			}, "type", "id")}, Offered: typed},
 }
 

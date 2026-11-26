@@ -74,8 +74,9 @@ func headingSkips(main []placed) map[string]string {
 
 func outlineProblems(main []placed) []string {
 	var out []string
+	skips := headingSkips(main)
 	for _, p := range main {
-		if why, ok := headingSkips(main)[p.rec.ID]; ok {
+		if why, ok := skips[p.rec.ID]; ok {
 			out = append(out, strings.Replace(why, "would be", "is", 1))
 		}
 	}

@@ -2,10 +2,7 @@ package chat
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
-	"github.com/tristanlawrenceguy/sameway/internal/query"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
 )
@@ -44,19 +41,9 @@ func (s *Service) deleteRecords(typeName string, ids, where []string) toolResult
 	if err != nil {
 		return fail("%v", err)
 	}
-	if len(ids) == 0 && len(where) > 0 {
-		recs, err := query.Filter(s.Store, t, where, "", 0, s.Now())
-		if err != nil {
-			return fail("Nothing was deleted: %v", err)
-		}
-		if len(recs) == 0 {
-			return fail("Nothing was deleted: no %s matches %s.", t.Name, strings.Join(where, ", "))
-		}
-		for _, r := range recs {
-			ids = append(ids, r.ID)
-		}
+	if ids, err = s.named(t, ids, where); err != nil { // record_ops.go
+		return fail("Nothing was deleted: %v", err)
 	}
-	ids = unique(ids) // remove.go
 	if len(ids) == 0 {
 		return fail("Nothing was deleted: name the record by id, several by ids, or every one where matches.")
 	}
@@ -71,14 +58,6 @@ func (s *Service) deleteRecords(typeName string, ids, where []string) toolResult
 	if err != nil {
 		return fail("Nothing was deleted, as %s %s could not be: %v", t.Name, ids[i], err)
 	}
-	titles := make([]string, len(done))
-	for i, c := range done {
-		titles[i] = c.Detail
-	}
-	c := records.Change{Action: "deleted", Component: t.Name, Href: "/t/" + t.Name, Ops: records.Joined(done),
-		Detail: schema.Count(len(ids), t.Name) + ": " + listed(titles, 4)} // remove.go
-	if len(ids) == 1 {
-		c = done[0]
-	}
+	c, titles := oneChange("deleted", t, done)
 	return toolResult{text: fmt.Sprintf("deleted %s, as one change (one Undo puts them back): %s.", schema.Count(len(ids), t.Name), schema.Names(titles)), change: &c}
 }

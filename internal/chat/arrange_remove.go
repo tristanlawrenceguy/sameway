@@ -30,7 +30,6 @@ func arrangeProblems(byID map[string]*store.Record, items []arrangeItem, remove 
 		}
 		listed[it.ID] = true
 	}
-	gone := map[string]bool{}
 	for _, id := range remove {
 		switch {
 		case byID[id] == nil:
@@ -38,7 +37,6 @@ func arrangeProblems(byID map[string]*store.Record, items []arrangeItem, remove 
 		case listed[id]:
 			problems = append(problems, fmt.Sprintf("%s is both listed and in remove; keep it in one", id))
 		}
-		gone[id] = true
 	}
 	return problems
 }

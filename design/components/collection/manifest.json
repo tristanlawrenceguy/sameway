@@ -1,7 +1,7 @@
 {
   "name": "collection",
   "version": "1.8.1",
-  "description": "The records that match a query, as a live list, table, cards, board or gallery: the tasks due this week, the notes tagged garden, the drafts, with the fields a person wants beside each. The same few words pick them here, on the list page, in the assistant's find_records and on the command line.",
+  "description": "The records that match a query, kept current, as a list, table, cards, board or gallery: the tasks due this week, the notes tagged garden. The same conditions pick them here, on the list page and in find_records.",
   "icon": "≡",
   "use": {"when": "a person wants to see what matches, kept current as records change: what is due, what is open, what is tagged.", "not": "one record on its own, which is a record block; or a search for words, which is the search block.", "with": "a heading in label, and a record block or the list page for the full thing."},
   "props": {
@@ -10,7 +10,7 @@
     "required": ["type"],
     "properties": {
       "type": {"type": "string", "minLength": 1, "description": "The content type, such as task."},
-      "where": {"type": "array", "items": {"type": "string"}, "description": "Conditions, all of which must hold. Each is field, operator, value with no spaces: status=doing (a task under way), done=false, due<today, due<=+7d, title~garden (contains), tags=health (has), notes= for an empty field, due!= for a set one. Dates: 2026-10-01, today, tomorrow, yesterday, now, +7d, -1w. Leave out for every record."},
+      "where": {"type": "array", "items": {"type": "string"}, "description": "Conditions, all of which must hold. Each is field, operator, value with no spaces: status=doing, done=false, due<today, due<=+7d, title~garden (contains), tags=health (has), notes= for an empty field, due!= for a set one. Dates: 2026-10-01, today, tomorrow, yesterday, now, +7d, -1w. Leave out for every record."},
       "order": {"type": "string", "description": "A field to order by, or -field for the largest or newest first; created_at and updated_at work too. Newest first when left out."},
       "limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20, "description": "How many to show at most."},
       "detail": {"type": "string", "enum": ["brief", "full"], "default": "brief", "description": "brief is each title as a link with its state; full adds the text."},
@@ -22,14 +22,14 @@
       "more": {"type": "boolean", "default": false, "description": "Filled in by the server: more matched than the limit shows, so the list says it shows the first of them. Leave out."},
       "problem": {"type": "string", "description": "Filled in by the server when a condition is wrong, saying what the type has instead. Leave out."},
       "id": {"type": "string"},
-      "as": {"type": "string", "enum": ["list", "table", "cards", "board", "gallery"], "default": "list", "description": "How the matches are shown: list is each title as a link with the chosen fields beside it; table has a column per chosen field; cards are one card each with the fields under the title; board is a column per choice of a pick-list field, such as a task's status (To do, Doing and Done), with a card for each record in its column; a yes-or-no field such as done cannot be a board, and a type with no pick-list cannot be shown as one; gallery is each record by its picture with its title under it, for files that are photos or videos, or notes photos were shared into: a picture is itself, made small, a video its first frame, a note the first picture it links to; one with no picture keeps its place."},
-      "by": {"type": "string", "description": "For a board, the pick-list field whose choices are the columns, such as status on a task or a project. The first pick-list field of the type when left out."},
+      "as": {"type": "string", "enum": ["list", "table", "cards", "board", "gallery"], "default": "list", "description": "list is each title as a link with the fields in show beside it; table has a column per field; cards are one card each; board is a column per choice of a pick-list field (by), such as a task's status, never a yes-or-no field such as done; gallery is each record by its picture, for files that are photos or videos and notes with a photo in them."},
+      "by": {"type": "string", "description": "For a board: the pick-list field whose choices are the columns, such as status. The type's first pick-list field when left out."},
       "groups": {"type": "array", "description": "Filled in by the server for a board: its columns, in the order the field lists its choices, then those with none. Leave out.", "items": {"type": "object", "additionalProperties": false, "required": ["label", "items"], "properties": {"label": {"type": "string"}, "items": {"type": "array", "items": {"type": "object"}}}}},
       "show": {"type": "array", "items": {"type": "string"}, "description": "Fields to show for each record, by name: due, status, project. A ref shows the title it points at. Leave out for the title and its state alone."},
       "columns": {"type": "array", "items": {"type": "string"}, "description": "Filled in by the server from show: the column headings of a table. Leave out."},
       "titleLabel": {"type": "string", "description": "Filled in by the server: what the title column is called. Leave out."},
       "pressable": {"type": "boolean", "default": false, "description": "Filled in by the server: whether the records offer a press, so a table has the column for it. Leave out."},
-      "controls": {"type": "boolean", "description": "Whether the person can narrow and sort the list where it is, with a few choices made from the type's fields: Sort (newest, oldest, A to Z, a date soonest), and a pick-list, a yes-or-no and a date field to show (Not done, Due before today). Their choices only narrow within where, never past it. Left out, they are offered on the block's own page, and on a canvas at full size when more than five match and the limit is over five; false for a short list or a small space, true to offer them anyway."},
+      "controls": {"type": "boolean", "description": "Whether the person can sort and narrow the list where it is (Newest first, Not done, Due before today), within where and never past it. Left out, they are offered on the block's own page and on a long list at full size; false for a short list or a small space, true to offer them anyway."},
       "choices": {"type": "object", "description": "Filled in by the server from controls: the props of the filters component (a form) that narrows and sorts it, and what it is showing. Leave out."}
     }
   },

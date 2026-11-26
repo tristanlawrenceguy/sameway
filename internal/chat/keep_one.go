@@ -19,11 +19,11 @@ var keepOneOp = Op{Title: "Keep one of records alike", Traits: Traits{Destructiv
 	Doing: func(a callArgs) string { return "Merging" + or(" "+schema.Plural(a.Type), " records") },
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.keepOne(a.Type, a.ID, a.Merge) },
 	Tool: llm.Tool{Name: "keep_one",
-		Description: "Make records that are one thing twice into one: keep the one given and merge others of its type with the same name into it. Without merge, it merges those nothing tells apart from it (open, the same day or no day), as a list's Keep the newest does. Give merge to name the ones that are the same thing; the same errand on another day is two things, not one. What the kept one leaves empty is filled from them, their notes are added to its, whatever pointed at them points at it, and they go. One change, undone in one go.",
+		Description: "Make records that are one thing twice into one: keep the one given and merge into it others of its type with the same name. Without merge, those nothing tells apart from it (open, the same day or no day); merge names the ones that are the same thing, as the same errand on another day is two things. The kept one's empty fields are filled from them, their notes added, what pointed at them points at it, and they go. One change, one Undo.",
 		Schema: obj(map[string]any{
 			"type":  typeArg,
 			"id":    map[string]any{"type": "string", "description": "The one to keep."},
-			"merge": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "The ids of the ones to merge into it, open and called the same. Leave out for those nothing tells apart from it."},
+			"merge": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of the ones to merge in, open and called the same."},
 		}, "type", "id")},
 	Offered: typed}
 

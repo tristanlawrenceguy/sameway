@@ -1,7 +1,7 @@
 {
   "name": "tracker",
   "version": "1.4.0",
-  "description": "What is being kept up, at a glance: each habit against its target for this day, week, month or year (at least the target, at most a limit, or no target when it only records), its streak, the last periods as dots, and a press to log. From the habit and entry records, kept current. At glance detail it is how many are met this period.",
+  "description": "Habits against their targets for this day, week, month or year, each with its streak, its last periods as dots and a press to log. From the habit and entry records, kept current: at least a target, at most a limit, or no target when it only records. At glance detail it is how many are met this period.",
   "icon": "◎",
   "use": { "when": "a person keeps something up and wants to see and log it without thinking: habits, a daily measure, a weekly distance, a monthly allowance of hours or a budget, a reading such as weight.", "not": "a one-off task, which is a task; or numbers over time on their own, which is a chart.", "with": "the habit records behind it, each with its own page, numbers and chart." },
   "props": {
@@ -65,6 +65,7 @@
     "operate": "To log, fill the amount (when there is one), the day when it was done before (when offered), and activate Log, which POSTs amount and on to /habit/{id}/log. The same is create_record on entry with the habit's id."
   },
   "examples": [
+    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" },
     { "name": "default", "props": { "habits": [
       { "id": "h1", "name": "Stretch", "shortName": "Stretch", "href": "/t/habit/h1", "period": "day", "amount": 1, "target": 1, "progress": "done", "pct": 100, "met": true, "streak": 12, "streakWords": "12 days in a row", "best": 30, "last": [{ "date": "2026-09-16", "met": true }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": false }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": true }] },
       { "id": "h2", "name": "Water", "shortName": "Water", "href": "/t/habit/h2", "unit": "glasses", "period": "day", "amount": 5, "target": 8, "progress": "5 of 8 glasses", "pct": 62, "met": false, "streak": 3, "streakWords": "3 days in a row", "best": 9, "last": [{ "date": "2026-09-16", "met": false }, { "date": "2026-09-17", "met": true }, { "date": "2026-09-18", "met": true }, { "date": "2026-09-19", "met": true }, { "date": "2026-09-20", "met": true }, { "date": "2026-09-21", "met": true }, { "date": "2026-09-22", "met": false }] },
@@ -80,7 +81,6 @@
     { "name": "glance", "props": { "detail": "glance", "label": "Today", "habits": [
       { "id": "h1", "name": "Stretch", "shortName": "Stretch", "met": true, "period": "day" }, { "id": "h2", "name": "Water", "shortName": "Water", "met": false, "period": "day" }
     ] }, "file": "examples/glance.html" },
-    { "name": "empty", "props": { "label": "Habits" }, "file": "examples/empty.html" },
     {"name": "problem", "props": {"label": "Garden habits", "tags": ["garden"], "problem": "no habit is tagged garden; the habits have health, reading"}, "file": "examples/problem.html"}
   ]
 }

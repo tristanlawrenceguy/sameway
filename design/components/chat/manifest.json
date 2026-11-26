@@ -1,7 +1,7 @@
 {
   "name": "chat",
   "version": "1.0.0",
-  "description": "A conversation region: a named area holding a transcript and a composer. A person can keep several chats and move between them from the menu at the top, place the region in a pane or the middle, or pop it out into a window of its own. It is a component like any other, so it can be placed anywhere on a canvas, restyled, or removed.",
+  "description": "A conversation region: a named area holding a transcript and a composer. A person keeps several chats and moves between them from its menu, and can open it in a window of its own. A block like any other: move it to a pane, restyle it or remove it.",
   "icon": "…",
   "use": { "when": "the conversation belongs on the canvas beside the person's content; it is always at /chat as well.", "not": "twice on a page.", "with": "a pane, when the person wants it beside what they are working on." },
   "props": {
@@ -10,8 +10,8 @@
     "required": [],
     "properties": {
       "label": { "type": "string", "default": "Assistant", "description": "Names the region, so landmark navigation can reach it." },
-      "layout": { "title": "Look", "type": "string", "enum": ["panel", "bare"], "default": "panel", "description": "panel gives it a surface and a visible title; bare drops the chrome so it sits inside another surface, with the title kept for screen readers." },
-      "slot": { "type": "string", "format": "multiline", "description": "The transcript and composer. Server code passes rendered components; props from a model or a form are escaped as text." },
+      "layout": { "title": "Look", "type": "string", "enum": ["panel", "bare"], "default": "panel", "description": "panel shows the title; bare keeps it for screen readers only, to sit inside another surface." },
+      "slot": { "type": "string", "format": "multiline", "description": "The transcript and composer, put in by the server; text from a model or a form is escaped." },
       "id": { "type": "string" }
     }
   },

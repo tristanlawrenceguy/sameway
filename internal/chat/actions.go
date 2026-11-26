@@ -20,52 +20,45 @@ import (
 var actionOp = Op{Title: "Run an action", Traits: Traits{OpenWorld: true},
 	Doing: saying("Running an action"),
 	Asks:  (*Service).askAction,
-	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-		if bad := s.notAsShown(a); bad != nil {
-			return *bad
-		}
-		return ran(s.Automate.For(s).Run(context.Background(), a.ID, s.current))
-	},
+	Run: asShown(func(s *Service, a toolArgs) automate.Result {
+		return s.Automate.For(s).Run(context.Background(), a.ID, s.current)
+	}),
 	Tool: llm.Tool{
 		Name:        "run_action",
-		Description: "Run one of the person's actions now, by id: a webhook they set up (an alarm, a weather update), a command on their machine (the first run asks them once, on a card), or an arrangement. A sorting (classify) or suggest action run now goes through the records already here that it would have been set off by and has not done yet, oldest first, in the background: how to sort what was there before it was set up, such as photos already kept. Actions of kind message are for the person to press, not for you. The result goes in the activity log; a webhook or command with show set puts its answer on the canvas.",
+		Description: "Run one of the person's actions now, by id. One that reaches outside (a webhook, a device, a command) is put to them first, on a card. A classify or suggest action goes through the records already here that it has not done yet, in the background: how to sort what was kept before it was set up. Actions of kind message are for the person to press, not for you.",
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
-			"id": map[string]any{"type": "string", "description": "The action's id, from the actions listed in the prompt or find_records."},
+			"id": map[string]any{"type": "string", "description": "The action's id, as listed in the prompt."},
 		}, "required": []string{"id"}, "additionalProperties": false},
 	}}
 
-// acceptOp is a command card's Yes, carried by a question: never offered
-// to the model, which may only ask.
-var acceptOp = Op{Title: "Accept a command", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "accept_action"},
-	Offered: func(*Service, *llm.Tool) bool { return false },
-	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-		if bad := s.notAsShown(a); bad != nil {
-			return *bad
-		}
-		return ran(s.Automate.For(s).Accept(context.Background(), a.ID))
-	}}
+// acceptOp is a command card's Yes, and runHeldOp the Run it on an action
+// held for a part read unsure (automate/unclear.go).
+var (
+	acceptOp = yesOp("Accept a command", "accept_action", func(s *Service, a toolArgs) automate.Result {
+		return s.Automate.For(s).Accept(context.Background(), a.ID)
+	})
+	runHeldOp = yesOp("Run a held action", "run_held", func(s *Service, a toolArgs) automate.Result {
+		return s.Automate.For(s).RunHeld(context.Background(), a.ID, a.Type, a.Record)
+	})
+)
 
-// runHeldOp is the Run it on an action held for a part read unsure
-// (automate/unclear.go): like accept_action, never offered to the model.
-var runHeldOp = Op{Title: "Run a held action", Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: "run_held"},
-	Offered: func(*Service, *llm.Tool) bool { return false },
-	Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
-		if bad := s.notAsShown(a); bad != nil {
-			return *bad
-		}
-		return ran(s.Automate.For(s).RunHeld(context.Background(), a.ID, a.Type, a.Record))
-	}}
+// yesOp is a card's Yes about an action, carried by a question: never
+// offered to the model, which may only ask.
+func yesOp(title, name string, run func(*Service, toolArgs) automate.Result) Op {
+	return Op{Title: title, Traits: Traits{OpenWorld: true}, Tool: llm.Tool{Name: name},
+		Offered: func(*Service, *llm.Tool) bool { return false }, Run: asShown(run)}
+}
 
-// notAsShown refuses a yes to an action changed since the owner was
-// asked: the yes was given to what the question showed, a program or an
-// address, not to what the action says now.
-func (s *Service) notAsShown(a toolArgs) *toolResult {
-	rec, err := s.Store.Get(records.ActionType, a.ID)
-	if a.Shown == nil || err != nil || automate.Shown(rec) == *a.Shown {
-		return nil
+// asShown runs an action, but refuses a yes to one changed since the
+// owner was asked: the yes was given to what the question showed, a
+// program or an address, not to what the action says now.
+func asShown(run func(*Service, toolArgs) automate.Result) func(*Service, toolArgs, llm.ToolCall) toolResult {
+	return func(s *Service, a toolArgs, _ llm.ToolCall) toolResult {
+		if rec, err := s.Store.Get(records.ActionType, a.ID); a.Shown != nil && err == nil && automate.Shown(rec) != *a.Shown {
+			return fail("nothing ran: the action changed after this was asked, so the yes was not for what it does now; run it again to ask afresh")
+		}
+		return ran(run(s, a))
 	}
-	r := fail("nothing ran: the action changed after this was asked, so the yes was not for what it does now; run it again to ask afresh")
-	return &r
 }
 
 // AddArrangement lays out an arrangement action's page.
