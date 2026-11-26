@@ -12,7 +12,6 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/convert"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -49,7 +48,7 @@ func (s *Service) watch(ctx context.Context, rec *store.Record, title string) Re
 	}
 	sum := sha256.Sum256([]byte(waits + "\n" + text))
 	seen := hex.EncodeToString(sum[:8])
-	ran := records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID, Detail: title, Href: relate.Page(records.ActionType, rec.ID)}
+	ran := ran(rec, title)
 	was, _ := rec.Fields["there"].(bool)
 	if rec.Fields["seen"] == seen {
 		return Result{Text: title + ": the page is as it was when last read, so nothing new to tell", Change: &ran}

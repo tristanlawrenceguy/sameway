@@ -28,9 +28,9 @@ var deviceOp = Op{Title: "Turn a device on or off", Traits: Traits{Idempotent: t
 	},
 	Tool: llm.Tool{
 		Name:        "switch_device",
-		Description: "Turn one of the person's devices (a light, a plug) on or off now, through their home's hub. It works for a device whose state says ON or OFF and whose topic follows Zigbee2MQTT or Tasmota, or that names its own set topic; any other says so, and an mqtt action can send it what its maker says.",
+		Description: "Turn one of the person's devices (a light, a plug) on or off now, through their home's hub. One it cannot switch says so.",
 		Schema: obj(map[string]any{
-			"id": map[string]any{"type": "string", "description": "The device record's id, from find_records on device."},
+			"id": map[string]any{"type": "string", "description": "The device record's id."},
 			"to": map[string]any{"type": "string", "enum": []string{"on", "off"}},
 		}, "id", "to"),
 	}}

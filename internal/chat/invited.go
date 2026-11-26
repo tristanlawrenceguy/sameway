@@ -63,10 +63,7 @@ func (s *Service) ThreadOf(messageID string) string {
 	emails, _ := s.Store.List("email", store.ListOptions{})
 	for _, e := range emails {
 		if id, _ := e.Fields["message_id"].(string); id != "" && strings.Trim(id, "<>") == want {
-			if root, _ := e.Fields["thread"].(string); root != "" {
-				return root
-			}
-			return e.ID
+			return rootOf(e)
 		}
 	}
 	return ""
