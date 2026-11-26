@@ -37,13 +37,9 @@ func FieldGets(st *store.Store, t *schema.Type, name string, h24 bool) string {
 		}
 		count[v]++
 	}
-	kind := t.Name
-	if len(recs) != 1 {
-		kind = schema.Plural(t.Name)
-	}
-	gets := "get"
+	kind, gets := schema.Plural(t.Name), "get"
 	if len(recs) == 1 {
-		gets = "gets"
+		kind, gets = t.Name, "gets"
 	}
 	head := fmt.Sprintf("%d existing %s %s %s", len(recs), kind, gets, name)
 	if len(order) == 1 {
