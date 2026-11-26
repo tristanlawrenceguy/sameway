@@ -1,7 +1,7 @@
 {
   "name": "textarea",
   "version": "1.0.0",
-  "description": "A multi-line text input with a visible label, optional hint, and inline error.",
+  "description": "Several lines of text, with a visible label.",
   "icon": "≣",
   "use": { "when": "several lines of free text.", "not": "one line, which is a text-field.", "with": "a form." },
   "props": {
@@ -15,7 +15,7 @@
       "value": { "type": "string", "format": "multiline", "default": "" },
       "rows": { "title": "Height in lines", "type": "integer", "minimum": 2, "maximum": 40, "default": 4 },
       "hint": { "type": "string" },
-      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field says so, and counts down as a person types, rather than stopping them mid-word." },
+      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field counts down as a person types and does not stop them mid-word." },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }
     }

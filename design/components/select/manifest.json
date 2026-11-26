@@ -1,7 +1,7 @@
 {
   "name": "select",
   "version": "2.0.0",
-  "description": "Choose one option from a fixed set. A few options are shown as radio buttons, all in view; more are a dropdown. One component either way, so what a person picks and what is stored are the same.",
+  "description": "Choose one option from a fixed set. Five or fewer show as radios, all in view; more as a dropdown.",
   "icon": "▾",
   "use": { "when": "one choice from a fixed set: a status, a kind, a period.", "not": "free text, which is a text-field; several choices, which are checkboxes; a record out of hundreds, which is a lookup.", "with": "a form." },
   "props": {
@@ -10,12 +10,12 @@
     "required": ["label", "name", "options"],
     "properties": {
       "label": { "type": "string", "minLength": 1, "description": "The question: the legend of the radios, or the dropdown's label." },
-      "context": { "type": "string", "description": "Which thing the choice is for, read after the label and not shown, when several of one question sit on a page: a board's Status on each card, with the card's title, heard as Status for Order compost." },
+      "context": { "type": "string", "description": "Which thing the choice is for, read after the label and not shown, when one question repeats on a page: Status for Order compost." },
       "name": { "type": "string", "minLength": 1 },
       "id": { "type": "string" },
-      "options": { "title": "Choices", "type": "array", "minItems": 1, "items": { "type": ["string", "object"] }, "description": "Either plain strings, shown as-is, or objects {value, label} when what is stored differs from what a person should read." },
+      "options": { "title": "Choices", "type": "array", "minItems": 1, "items": { "type": ["string", "object"] }, "description": "Plain strings, or {value, label} objects when what is stored differs from what a person reads." },
       "value": { "type": "string", "default": "", "description": "The chosen option." },
-      "as": { "title": "Shown as", "type": "string", "enum": ["auto", "radios", "dropdown"], "default": "auto", "description": "auto shows five or fewer options as radios, all in view, and more as a dropdown. radios or dropdown when the author knows better, such as a dropdown in a table cell." },
+      "as": { "title": "Shown as", "type": "string", "enum": ["auto", "radios", "dropdown"], "default": "auto", "description": "auto shows five or fewer options as radios and more as a dropdown." },
       "hint": { "type": "string" },
       "error": { "type": "string" },
       "required": { "type": "boolean", "default": false }

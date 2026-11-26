@@ -1,7 +1,7 @@
 {
   "name": "export",
   "version": "1.0.0",
-  "description": "The ways to take something away as a file: a line saying what, and a link for each format that fits it, each naming the kind of file, its format and its size, downloaded with a plain link that needs no script.",
+  "description": "Download links for a record, a list or the whole workspace. A line says what, then one plain link for each format that fits, named by its kind of file, format and size.",
   "icon": "⤓",
   "use": {
     "when": "a record, a list, a calendar or the whole workspace can be taken away as a file.",
@@ -16,7 +16,7 @@
       "what": {
         "type": "string",
         "minLength": 1,
-        "description": "What the files hold, after Download: this task, these 12 tasks, everything in Home. Said once in sight, and at the end of each link's name so a link read on its own still says what it downloads."
+        "description": "What the files hold, read after Download: this task, these 12 tasks, everything in Home."
       },
       "items": {
         "type": "array",
@@ -27,18 +27,18 @@
           "additionalProperties": false,
           "required": ["href", "format"],
           "properties": {
-            "href": { "type": "string", "description": "Where the file is: a plain GET that answers with Content-Disposition: attachment." },
+            "href": { "type": "string", "description": "Where the file is: a plain GET that answers with the file." },
             "format": {
               "type": "string",
               "enum": ["csv", "xlsx", "vcf", "ics", "md", "html", "docx", "pdf", "zip", "srt", "txt"],
-              "description": "The kind of file, which names the link: csv Spreadsheet (CSV), xlsx Excel (XLSX), vcf Contacts (vCard), ics Calendar (ICS), md Text (Markdown), html Web page (HTML), docx Word (DOCX), pdf Printable (PDF), zip Everything (ZIP), srt Subtitles (SRT), txt Plain text (TXT)."
+              "description": "The kind of file, which names the link: csv is Spreadsheet (CSV)."
             },
-            "size": { "type": "string", "description": "How big the file is, such as 4 KB or about 12 MB, when it is cheap to know. Leave out rather than guess." }
+            "size": { "type": "string", "description": "Such as 4 KB or about 12 MB, only when known." }
           }
         }
       },
-      "note": { "type": "string", "description": "One sentence under the links, only when what is in the files is not plain from what, such as what everything holds and what it leaves out." },
-      "id": { "type": "string", "default": "export", "description": "Names the line that says what, so the list of links is named by it. Give one when two are on a page." }
+      "note": { "type": "string", "description": "One sentence under the links, only when what the files hold is not plain from what." },
+      "id": { "type": "string", "default": "export", "description": "Give one only when two are on a page." }
     }
   },
   "a11y": {
