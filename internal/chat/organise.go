@@ -37,7 +37,7 @@ var organiseOps = []Op{{Title: "Organise longer writing", Traits: Traits{Idempot
 		return s.organiseWriting(a.Type, a.Piece, a.Parts, a.Material)
 	},
 	Tool: llm.Tool{Name: "organise_writing",
-		Description: "Organise longer writing: a piece made of parts in order, as a book of chapters, and the material that goes with it (guidelines, submission details, research) for the whole or for one part. Give the piece and its parts in reading order; parts it has already and you leave out stay, after them. One change, undone in one go. Fields the type lacks for this are added first. Make the parts with create_record before.",
+		Description: "Organise longer writing: a piece made of parts in order, as a book of chapters, and the material that goes with it (guidelines, research) for the whole or for one part. Parts it has already and you leave out stay, after those you give. Make the parts with create_record first.",
 		Schema: obj(map[string]any{
 			"type":  map[string]any{"type": "string", "description": "The content type; note when left out."},
 			"piece": map[string]any{"type": "string", "description": "The id of the whole piece."},

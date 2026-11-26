@@ -64,7 +64,7 @@ func (s *Service) keptWords(t *schema.Type, kept map[string]*store.Record) strin
 
 // suggestChange puts to the person a change to the kept record with what
 // is new, leaving out what it already says; with nothing new, nothing.
-func (s *Service) suggestChange(action *store.Record, from *schema.Type, rec *store.Record, t *schema.Type, same *store.Record, fields map[string]any, why string) Result {
+func (s *Service) suggestChange(action *store.Record, from *schema.Type, rec *store.Record, t *schema.Type, same *store.Record, fields map[string]any, why string, read []records.Op) Result {
 	name := records.Name(s.Store, from, rec)
 	for k, v := range fields {
 		if fmt.Sprint(same.Fields[k]) == fmt.Sprint(v) || k == t.Title {
@@ -88,14 +88,8 @@ func (s *Service) suggestChange(action *store.Record, from *schema.Type, rec *st
 		said = append(said, label+" "+s.fieldWords(t, k, fields[k]))
 	}
 	summary := fmt.Sprintf("Change %s from %q: %s?", records.Name(s.Store, t, same), name, strings.Join(said, ", "))
-	done, err := s.Apply(records.Op{Type: records.ProposalType, After: map[string]any{"summary": summary, "detail": strings.TrimSpace(why),
-		"action": map[string]any{"tool": "update_record", "type": t.Name, "id": same.ID, "fields": fields}, "state": "pending",
-		"from": from.Name + "/" + rec.ID, "by_action": action.ID, "yes": "Change it", "no": "No"}})
-	if err != nil {
-		return fail("could not put the suggestion: %v", err)
-	}
-	p := done[0]
-	return Result{Text: "suggested: " + summary, Answer: p.ID, Change: &records.Change{Action: "proposed", ID: p.ID, Detail: trim.Line(summary, 80), Ops: done}}
+	return s.putSuggestion(action, from.Name+"/"+rec.ID, summary, why, "Change it",
+		map[string]any{"tool": "update_record", "type": t.Name, "id": same.ID, "fields": fields}, read)
 }
 
 // fieldWords is a suggested value as a person reads it: a day in full,

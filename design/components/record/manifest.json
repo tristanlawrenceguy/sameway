@@ -1,7 +1,7 @@
 {
   "name": "record",
   "version": "1.2.0",
-  "description": "A content record shown on the canvas as the record it is: the note on the notes page and the note on the canvas are one thing, edited in either place. Give it the type and the record's id; the server fills in the words from the record when it renders the page.",
+  "description": "One record shown on the canvas as itself: the note there and the note on the notes page are one thing, edited in either place. Give it the type and the record's id; the server fills in the words from the record.",
   "icon": "✎",
   "use": {"when": "a note, task or event belongs on the canvas as itself, edited in either place.", "not": "copying a record's words into a card.", "with": "the record's own page at /t/<type>."},
   "props": {
@@ -11,7 +11,7 @@
     "properties": {
       "type": {"type": "string", "minLength": 1, "description": "The content type, such as note."},
       "record": {"type": "string", "minLength": 1, "description": "The record's id, from find_records or a page URL /t/<type>/<id>."},
-      "detail": {"type": "string", "enum": ["brief", "full", "page"], "default": "full", "title": "How much to show", "description": "brief is the title alone, for a pane or a list of many. full is the title, the text and the other fields. page adds the way to the record's own page. Expanding a block asks for page."},
+      "detail": {"type": "string", "enum": ["brief", "full", "page"], "default": "full", "title": "How much to show", "description": "brief is the title alone, for a pane or a list of many; full the title, the text and the other fields; page adds the way to the record's own page, which expanding a block asks for."},
       "level": {"title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 3, "description": "Heading level of the title so the block fits the page outline."},
       "title": {"type": "string", "description": "Filled in by the server from the record. Leave out."},
       "titleProp": {"type": "string", "description": "Filled in by the server: the field the title comes from. Leave out."},
