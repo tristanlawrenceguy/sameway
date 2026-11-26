@@ -70,6 +70,7 @@ func TestAssistant(t *testing.T) {
 	}
 	set := append(append(append(append(append(requests(), oneStep()...), removals()...), doubts()...), sorting()...), people()...)
 	set = append(set, payhome()...)
+	set = append(set, topics()...)
 	switch os.Getenv("SAMEWAY_BENCH_SET") {
 	case "newcomer":
 		set = newcomer() // newcomer_test.go
