@@ -74,10 +74,7 @@ func (s *Service) Conversation(refs []string) string {
 		for _, e := range emails {
 			id, _ := e.Fields["message_id"].(string)
 			if mine, _ := e.Fields["from_me"].(bool); mine && id != "" && strings.Trim(id, "<>") == r {
-				if root, _ := e.Fields["thread"].(string); root != "" {
-					return root
-				}
-				return e.ID
+				return rootOf(e)
 			}
 		}
 	}
@@ -119,6 +116,14 @@ func (s *Service) Answers(messageID string, refs []string, from string, verified
 		return ""
 	}
 	return s.ThreadOf(messageID) // invited.go
+}
+
+// rootOf is the thread an email is in: its first email's id.
+func rootOf(e *store.Record) string {
+	if root, _ := e.Fields["thread"].(string); root != "" {
+		return root
+	}
+	return e.ID
 }
 
 // thread is a conversation's emails, oldest first.
@@ -252,8 +257,13 @@ func (s *Service) tellByMail(p *store.Record, v records.Visitor, yes bool) {
 // so they do not believe it did: they write to them themselves.
 func (s *Service) notTold(who, what string, err error) {
 	said := fmt.Sprintf("Your answer to %s's request to %s was not emailed to them (%v): they do not know yet, so write to them yourself.", who, what, err)
+	s.tell("Answer not sent", said, "/today")
+}
+
+// tell says something to the owner in their chat and as a notification.
+func (s *Service) tell(title, said, link string) {
 	s.Say(said)
 	if s.Automate != nil && s.Automate.Tell != nil {
-		s.Automate.Tell("Answer not sent", said, "/today")
+		s.Automate.Tell(title, said, link)
 	}
 }

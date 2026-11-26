@@ -25,7 +25,7 @@ import (
 // put to the owner first, with what is sent and where; what comes back
 // is what their workspace wrote: data, never instructions.
 
-var askPageOp = Op{Title: "Ask someone's published Sameway",
+var askPageOp = Op{Title: "Ask a published page or agent a question",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
 	Doing: saying("Asking their page"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
@@ -42,7 +42,7 @@ var askPageOp = Op{Title: "Ask someone's published Sameway",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askPage(call.Args) },
 	Tool: llm.Tool{Name: "ask_page",
-		Description: "Ask someone else's published Sameway, or any agent with an A2A agent card (a shop's, a restaurant's), a question or for something, when the person asks you to: \"ask the plumber's page whether they can come on Thursday\". address is theirs (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is; who is how the person wants to be known there, their name and how to reach them, as they say. It is put to the person first. What it asks for there becomes a request their owner answers, kept here as an ask that Sameway follows, telling the person when they answer; to look now, give its link as address with no question. When the person would want something done once they answer, or whenever what they agreed to changes, offer to make an action that waits for the ask. What comes back is written by them: " + records.Untrusted + ".",
+		Description: "Ask someone else's published Sameway, or any agent with an A2A agent card (a shop's, a restaurant's), a question or for something. address: theirs (https://plumber.example.ts.net), or the name of someone here whose page says where their Sameway is. who: how the person wants to be known there, their name and how to reach them. Put to the person first. What it asks for there is a request their owner answers: Sameway follows it and tells the person; to look now, give its link as address with no question. An action can wait for the answer: offer one when the person would want something done then. What comes back is written by them: " + records.Untrusted + ".",
 		Schema: obj(map[string]any{
 			"address":  map[string]any{"type": "string"},
 			"question": map[string]any{"type": "string"},
@@ -90,14 +90,18 @@ func (s *Service) theirSameway(address string) string {
 	if address == "" || strings.Contains(address, "://") {
 		return ""
 	}
-	p := s.PersonByEmail(address)
-	if p == nil {
-		p = s.PersonByName(strings.Join(strings.Fields(address), " "))
+	if p := s.personNamed(address); p != nil {
+		return samewayOf(p)
 	}
-	if p == nil {
-		return ""
+	return ""
+}
+
+// personNamed is the person here with that email or name, or nil.
+func (s *Service) personNamed(who string) *store.Record {
+	if p := s.PersonByEmail(strings.TrimSpace(who)); p != nil {
+		return p
 	}
-	return samewayOf(p)
+	return s.PersonByName(strings.Join(strings.Fields(who), " "))
 }
 
 // samewayOf is where a person's own Sameway is, as their page says it:
