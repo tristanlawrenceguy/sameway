@@ -22,7 +22,7 @@ func words() []request {
 			}},
 		{name: "ct-card-link", say: "Add a card to this page titled Seed catalogue that links to https://example.org/seeds",
 			check: func(a *app.App, _ string) string {
-				for _, p := range propsOf(a, "card") {
+				for _, p := range everyProps(a, "card") {
 					if low(p["title"]) == "seed catalogue" {
 						return want(strings.Contains(low(p["href"]), "example.org/seeds"), "the card does not link to the catalogue: "+jsonOf(p))
 					}
@@ -31,7 +31,7 @@ func words() []request {
 			}},
 		{name: "ct-alert", say: "Put a warning on this page that says: The water is off on Friday.",
 			check: func(a *app.App, _ string) string {
-				for _, p := range propsOf(a, "alert") {
+				for _, p := range everyProps(a, "alert") {
 					if strings.Contains(low(p["message"])+low(p["title"]), "water is off") {
 						return want(p["kind"] == "warning" || p["kind"] == "danger", "the alert is not a warning: "+jsonOf(p))
 					}
@@ -40,7 +40,7 @@ func words() []request {
 			}},
 		{name: "ct-image", say: "Show the picture at /files/fern.jpg on this page. It is the fern on the kitchen shelf with two new fronds.",
 			check: func(a *app.App, _ string) string {
-				for _, p := range propsOf(a, "image") {
+				for _, p := range everyProps(a, "image") {
 					if strings.Contains(low(p["src"]), "/files/fern.jpg") {
 						return want(strings.Contains(low(p["alt"]), "fern"), "the picture has no description: "+jsonOf(p))
 					}
@@ -49,7 +49,7 @@ func words() []request {
 			}},
 		{name: "ct-open-close", say: "Add a section to this page called Packing list that opens and closes, closed to start with. Inside it: Tent, stove, map.",
 			check: func(a *app.App, _ string) string {
-				for _, p := range propsOf(a, "disclosure") {
+				for _, p := range everyProps(a, "disclosure") {
 					if strings.Contains(low(p["label"]), "packing list") {
 						return all(want(strings.Contains(low(p["slot"]), "stove"), "the section does not hold the list: "+jsonOf(p)),
 							want(p["open"] != true, "the section starts open"))
@@ -60,8 +60,8 @@ func words() []request {
 	}
 }
 
-// propsOf is the props of every block of a component.
-func propsOf(a *app.App, component string) []map[string]any {
+// everyProps is the props of every block of a component.
+func everyProps(a *app.App, component string) []map[string]any {
 	var out []map[string]any
 	for _, b := range list(a, records.BlockType) {
 		if b.Fields["component"] != component {
@@ -78,7 +78,7 @@ func propsOf(a *app.App, component string) []map[string]any {
 
 // propHas is whether a block of the component holds the words in a prop.
 func propHas(a *app.App, component, prop, words string) bool {
-	for _, p := range propsOf(a, component) {
+	for _, p := range everyProps(a, component) {
 		if strings.Contains(low(p[prop]), words) {
 			return true
 		}
