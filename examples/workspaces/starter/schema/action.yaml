@@ -32,7 +32,7 @@ fields:
   watch_for:
     label: Tell me when it shows
     type: text
-    description: "For a watch action, what to wait for on the page, in the person's words: a price under 200, a place free in March, the form open again. On its schedule the page is read, and the person is told once when it comes to show this, and again only after it stopped and came back. Accepted once, as it reaches out on its own; nothing of theirs is sent."
+    description: "For a watch action, what to wait for on the page, in the person's words: a price under 200, a place free in March. They are told once when the page comes to show it, and again only after it stopped and came back."
   seen:
     type: string
     hidden: true
@@ -51,13 +51,13 @@ fields:
     description: "For an mqtt action, what to publish: ON, or JSON such as {\"state\": \"ON\", \"brightness\": 200}."
   command:
     type: text
-    description: "For a command action, the program to run and its arguments, on this machine as you, such as: curl -s https://example.com/ping. Only a program named in actions.allow in workspace.yaml runs, and it runs directly, not through a shell: no pipes, no redirects, no second command. The first press asks you once, showing this line; after you accept, the button just runs it. Change the line and it asks again."
+    description: "For a command action, the program to run and its arguments, such as: curl -s https://example.com/ping. Only a program named in actions.allow in workspace.yaml runs, directly, not through a shell: no pipes, no redirects, no second command. The first press asks you once, showing this line; change the line and it asks again."
   folder:
     type: string
     description: For a command action, where to run it. Defaults to the workspace folder.
   accepted:
     type: string
-    description: "What you accepted, kept by the system: the command line a command runs, or what a webhook or mqtt action sends on its own (on a schedule, when something happens, from outside). It runs only while it matches this; pressing it yourself needs no acceptance."
+    description: "What you accepted, kept by the system: a command's line, or what a webhook, mqtt or watch action sends on its own. It runs only while it matches this."
     readonly: true
   show:
     label: On the canvas

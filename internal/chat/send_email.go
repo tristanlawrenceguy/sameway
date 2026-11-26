@@ -21,7 +21,7 @@ import (
 // something to happen, such as the owner answering a request, this is how
 // anyone who asked hears back without Sameway of their own.
 
-var sendEmailOp = Op{Title: "Send an email",
+var sendEmailOp = Op{Title: "Send an email or a calendar invitation, asked first",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
 	Doing: saying("Writing an email"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
@@ -189,10 +189,7 @@ func (s *Service) emailOf(raw json.RawMessage) (emailArgs, error) {
 		if err != nil {
 			return e, fmt.Errorf("thread names no email here: give an email's id")
 		}
-		e.root, _ = rec.Fields["thread"].(string)
-		if e.root == "" {
-			e.root = rec.ID
-		}
+		e.root = rootOf(rec)
 		mails := s.thread(e.root) // email_conversation.go
 		e.refs = threadRefs(mails)
 		if e.Subject == "" {

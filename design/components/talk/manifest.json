@@ -1,7 +1,7 @@
 {
   "name": "talk",
   "version": "1.1.0",
-  "description": "Voice mode: a spoken conversation with the assistant. It listens until the person stops speaking, writes what was said down on the computer that hosts the workspace, says back what it heard, sends it as their message, reads the reply aloud in a voice on this device, and listens again, every word shown in the chat as it goes. When replies are not read aloud it lets the microphone go and waits for Speak. Shown only where the browser can record and speech-to-text is on the host.",
+  "description": "Voice mode: a spoken conversation with the assistant. It listens until the person stops, writes what was said down on the computer that hosts the workspace, says it back, sends it, reads the reply aloud in a voice on this device and listens again, every word shown in the chat. When replies are not read aloud it lets the microphone go and waits for Speak. Shown only where the browser can record and speech-to-text is on the host.",
   "icon": "◉",
   "use": {
     "when": "a person would rather talk than type: hands busy, eyes elsewhere, or speech easier than keys.",

@@ -68,12 +68,19 @@ func TestAssistant(t *testing.T) {
 		}
 		defer out.Close()
 	}
-	set := append(append(append(append(requests(), oneStep()...), removals()...), doubts()...), compForms()...)
+	set := append(append(append(append(append(requests(), oneStep()...), removals()...), doubts()...), sorting()...), people()...)
+	set = append(set, dataBlocks()...)
+	set = append(set, payhome()...)
+	set = append(set, actions()...)
+	set = append(set, topics()...)
+	set = append(set, compForms()...)
 	switch os.Getenv("SAMEWAY_BENCH_SET") {
 	case "newcomer":
 		set = newcomer() // newcomer_test.go
 	case "languages":
 		set = languages() // languages_test.go
+	case "":
+		set = append(set, talks()...) // talk_test.go
 	}
 	var all []result
 	for _, r := range set {

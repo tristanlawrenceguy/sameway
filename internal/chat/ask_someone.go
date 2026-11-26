@@ -28,7 +28,7 @@ import (
 // assistant here. Asking still leaves the workspace, so it is put to the
 // owner first, like every other thing that cannot be taken back.
 
-var askSomeoneOp = Op{Title: "Ask someone's Sameway when they are free",
+var askSomeoneOp = Op{Title: "Ask someone's Sameway when you are both free",
 	Access: ForOwner, Traits: Traits{OpenWorld: true},
 	Doing: saying("Asking their Sameway"),
 	Asks: func(s *Service, _ toolArgs, call llm.ToolCall) (toolResult, bool) {
@@ -43,9 +43,9 @@ var askSomeoneOp = Op{Title: "Ask someone's Sameway when they are free",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.askSomeone(call.Args) },
 	Tool: llm.Tool{Name: "ask_someone",
-		Description: "Ask another person's own Sameway when they are free, for the owner, when the owner asks to: \"ask Sam when we are both free on Thursday evening\". The person is one of the people here whose page says where their Sameway is. from and to are the stretch of time to ask about, two weeks at most, as a date and time (2026-11-19 17:00). Their Sameway answers with the times they are busy, never what they are doing, and the answer says when you are both free; or it asks them first, in which case ask the same again later. Asking is put to the owner first.",
+		Description: "Ask another person's own Sameway when they are free; the answer says when they and the owner both are. who: someone here whose page says where their Sameway is. from, to: a date and time each (2026-11-19 17:00), two weeks apart at most. Put to the owner first.",
 		Schema: obj(map[string]any{
-			"who":  map[string]any{"type": "string", "description": "their name, or the email on their page"},
+			"who":  map[string]any{"type": "string", "description": "name or email"},
 			"from": map[string]any{"type": "string"},
 			"to":   map[string]any{"type": "string"},
 		}, "who", "from", "to")},
@@ -63,10 +63,7 @@ type askSomeoneArgs struct {
 func (s *Service) askSomeoneOf(raw json.RawMessage) (a askSomeoneArgs, p *store.Record, at string, err error) {
 	json.Unmarshal(raw, &a)
 	a.Who = strings.TrimSpace(a.Who)
-	if p = s.PersonByEmail(a.Who); p == nil {
-		p = s.PersonByName(strings.Join(strings.Fields(a.Who), " "))
-	}
-	if p == nil {
+	if p = s.personNamed(a.Who); p == nil {
 		return a, nil, "", fmt.Errorf("there is nobody called %q here: add them as a person first", a.Who)
 	}
 	name, _ := p.Fields["name"].(string)
@@ -153,17 +150,13 @@ var letAskOp = Op{Title: "Let someone's Sameway ask yours",
 		if !strings.Contains(a.Email, "@") {
 			return fail("let_ask needs the email they sign in to Tailscale with, such as sam@example.com"), true
 		}
-		who := a.Email
-		if a.Name != "" {
-			who = a.Name + " (" + a.Email + ")"
-		}
-		return s.ask(question{"Let " + who + "'s Sameway ask yours when you are free?",
+		return s.ask(question{"Let " + nameAndEmail(a.Name, a.Email) + "'s Sameway ask yours when you are free?",
 			fmt.Sprintf("Their own Sameway, signed in to Tailscale as %s, could ask this one when you are free, up to %d times a day, and be told the times you are busy without asking you: never what you are doing, and nothing else. It opens nothing here, and what it asks is kept under Enquiries. You can take it back at any time.", a.Email, enquiriesADay),
 			"Yes, let it ask", "No"}, map[string]any{"tool": "let_ask", "email": a.Email, "name": a.Name, "may_ask": a.MayAsk}), true
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.letAsk(letAskOf(call.Args)) },
 	Tool: llm.Tool{Name: "let_ask",
-		Description: "Say what another person's own Sameway may ask this one and be told without asking the owner, when the owner says so: \"Sam can ask when I'm free\". may_ask is the kinds of question: free is the times the owner is busy between two moments, never what they are doing; an empty list takes it away, at once. They are matched by the email they sign in to Tailscale with, and their Sameway reaches this one once the owner shares this machine with them in Tailscale (or they are on the same tailnet). It gives no access to the workspace. Giving it is put to the owner first.",
+		Description: "What another person's own Sameway may ask this one and be told without asking the owner. may_ask: free is the times the owner is busy, never what they are doing; an empty list takes it away, at once. email: the one they sign in to Tailscale with. It gives no access to the workspace. Giving it is put to the owner first.",
 		Schema: obj(map[string]any{
 			"email":   map[string]any{"type": "string"},
 			"name":    map[string]any{"type": "string"},
@@ -201,17 +194,7 @@ func (s *Service) letAsk(a letAskArgs) toolResult {
 	if p == nil && len(may) == 0 {
 		return toolResult{text: a.Email + " could ask nothing"}
 	}
-	op := records.Op{Type: records.PersonType, After: map[string]any{"may_ask": may}}
-	name := a.Name
-	if p == nil {
-		if name == "" {
-			name, _, _ = strings.Cut(a.Email, "@")
-		}
-		op.After = map[string]any{"name": name, "email": a.Email, "may_ask": may}
-	} else {
-		op.ID = p.ID
-		name, _ = p.Fields["name"].(string)
-	}
+	op, name := onPerson(p, a.Name, a.Email, "may_ask", may) // access.go
 	done, err := s.Apply(op)
 	if err != nil {
 		return fail("could not change what they may ask: %v", err)

@@ -12,11 +12,15 @@ func TestMCPsOwnToolsRefuseAnArgumentTheyDoNotTake(t *testing.T) {
 	_, replies := drive(t,
 		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"describe","arguments":{"nme":"task"}}}`,
 		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"describe","arguments":{"name":"task"}}}`,
+		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"today","arguments":{"day":7}}}`,
 	)
 	if said, isErr := text(t, replies[0]); !isErr || !strings.Contains(said, "describe does not take nme (did you mean name?). It takes name, part") {
 		t.Errorf("nme is refused with the one meant, got %v %q", isErr, said)
 	}
 	if said, isErr := text(t, replies[1]); isErr {
 		t.Errorf("name still reads one thing: %q", said)
+	}
+	if said, isErr := text(t, replies[2]); !isErr || !strings.Contains(said, "today does not take day") {
+		t.Errorf("today refuses day, where before it answered today alone, got %v %q", isErr, said)
 	}
 }
