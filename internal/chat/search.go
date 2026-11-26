@@ -17,18 +17,16 @@ var searchOp = Op{Title: "Search everything", Traits: Traits{ReadOnly: true, Ide
 	Doing:  searching,
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.search(a.Query, a.Type, a.Page) },
 	Tool: llm.Tool{
-		Name: "search",
-		Description: "Find anything the person has by the words in it: every record of every content type and every block on the canvas, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. " +
-			"Search everything first: the answer begins with how many were found of each kind, 12 found: 7 notes, 3 tasks, 2 blocks. Then, if the counts show where it is, search again with type to see only that kind. " +
-			fmt.Sprintf("At most %d come back at a time; the answer says when there are more, and page asks for them.", search.Limit),
+		Name:        "search",
+		Description: "Find anything the person has by the words in it: every record of every type and every block, with where each is. Use it before saying something does not exist, and to find the id of a thing they mention. The answer starts with how many were found of each kind; type narrows to one kind, and page gives more when the answer says there are more.",
 		Schema: map[string]any{"type": "object", "properties": map[string]any{
 			"query": map[string]any{"type": "string", "description": "Words to find; what has all of them comes first."},
-			"type":  map[string]any{"type": "string", "description": "Only this kind of thing. Leave it out to search everything."},
-			"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1; only when the answer says there are more."},
+			"type":  map[string]any{"type": "string", "description": "Only this kind."},
+			"page":  map[string]any{"type": "integer", "minimum": 1, "description": "From 1."},
 		}, "required": []string{"query"}, "additionalProperties": false},
 	}, Offered: func(s *Service, t *llm.Tool) bool {
 		kinds := strings.Join(search.Kinds(s.types()), ", ")
-		withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind of thing, one of: " + kinds + ". Leave it out to search everything."})
+		withProp(t, "type", map[string]any{"type": "string", "description": "Only this kind, one of: " + kinds + "."})
 		if search.ByMeaning(s.Store) {
 			t.Description += " " + byMeaning
 		}
