@@ -72,11 +72,13 @@ func (s *Server) info() map[string]any {
 }
 
 // discover is server/discover: the revisions, what it offers, who it is.
+// The list changes for the assistant (turn_tools.go), as initialize says
+// too: Claude Code reads it again on the notification only when told so.
 func (s *Server) discover() map[string]any {
 	return map[string]any{
 		"resultType":        "complete",
 		"supportedVersions": []string{modernProtocol},
-		"capabilities":      map[string]any{"tools": map[string]any{}},
+		"capabilities":      map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}},
 		"instructions":      instructions,
 		"_meta":             map[string]any{metaServer: s.info()},
 		"ttlMs":             0,

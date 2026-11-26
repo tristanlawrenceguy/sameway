@@ -33,6 +33,7 @@ func TestTheAssistantOverMCPIsGivenItsTurnsTools(t *testing.T) {
 		`{"jsonrpc":"2.0","id":2,"method":"tools/list"}`,
 		`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"more_tools","arguments":{"name":"set_setting"}}}`,
 		`{"jsonrpc":"2.0","id":4,"method":"tools/list"}`,
+		`{"jsonrpc":"2.0","id":5,"method":"server/discover","params":{` + modernMeta + `}}`,
 	}
 	var out bytes.Buffer
 	srv := &mcp.Server{App: a, Version: "test", Assistant: true, Only: map[string]bool{"create_record": true, "find_records": true},
@@ -55,6 +56,11 @@ func TestTheAssistantOverMCPIsGivenItsTurnsTools(t *testing.T) {
 	}
 	if caps := said[0]["result"].(map[string]any)["capabilities"].(map[string]any)["tools"].(map[string]any); caps["listChanged"] != true {
 		t.Error("the server says its list changes")
+	}
+	// Claude Code, on 2026-07-28, reads the list again only when discover
+	// says it changes: without it, run_action brought was never callable.
+	if caps := said[5]["result"].(map[string]any)["capabilities"].(map[string]any)["tools"].(map[string]any); caps["listChanged"] != true {
+		t.Error("server/discover says its list changes, too")
 	}
 	first := names(said[1])
 	if !strings.Contains(first, ",create_record,") || !strings.Contains(first, ",more_tools,") || strings.Contains(first, ",set_setting,") || !strings.Contains(first, ",describe,") {
