@@ -20,29 +20,29 @@
         "title": "Link",
         "type": "string",
         "minLength": 1,
-        "description": "Destination URL or path."
+        "description": "URL or path."
       },
       "label": {
         "type": "string",
         "minLength": 1,
-        "description": "Visible text. Describe the destination, never 'click here'."
+        "description": "Says where it leads, never 'click here'."
       },
       "context": {
         "title": "Extra words for screen readers",
         "type": "string",
-        "description": "Extra words added to the accessible name but not shown, so a compact label like 'Edit' still reads as 'Edit card'."
+        "description": "Words read after the label, not shown, so Edit reads as Edit card."
       },
       "current": {
         "title": "This is the current page",
         "type": "boolean",
         "default": false,
-        "description": "True when the link points at the page being viewed."
+        "description": "It points at the page being viewed."
       },
       "within": {
         "title": "The page being viewed is inside where it leads",
         "type": "boolean",
         "default": false,
-        "description": "True when the page being viewed is one of the pages under this link's, such as a record of the list it leads to: marked as where the person is (aria-current=true), not as the page itself. current wins over it."
+        "description": "The page being viewed is under where it leads, such as a record of its list. current wins over it."
       },
       "look": {
         "title": "How it looks",
@@ -52,7 +52,7 @@
           "button"
         ],
         "default": "text",
-        "description": "text is a link in running text. button is a link standing on its own, given the shape and size of a quiet button so it is easy to press: the way back to a page, the list behind a block, the months either side."
+        "description": "button is a link standing on its own, shaped as a quiet button so it is easy to press: the way back, the list behind a block."
       },
       "id": {
         "type": "string"

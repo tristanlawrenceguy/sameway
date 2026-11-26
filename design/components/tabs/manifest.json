@@ -1,7 +1,7 @@
 {
   "name": "tabs",
   "version": "1.0.0",
-  "description": "A row of places at the same level, such as the canvases, one of them the page a person is on. Each is a link: switching is going to a page, so it needs no script.",
+  "description": "A row of places at the same level, such as the canvases, one of them the page a person is on. Each is a link, so it needs no script.",
   "icon": "▭",
   "use": { "when": "a few sibling pages a person moves between, such as canvases.", "not": "showing and hiding parts of one page, or the main navigation.", "with": "a bar only once there is a second place; one tab says nothing." },
   "props": {

@@ -1,7 +1,7 @@
 {
   "name": "clock",
   "version": "1.1.0",
-  "description": "The time now, with alarms and timers: set one here, and it rings here when its time comes, with a sound and a notification if the browser allows, until it is dismissed or given five more minutes. Under the time is what is coming: the reminders set and whatever is on today from the calendar's types. A reminder is a record, so it also shows on the calendar and on its own page.",
+  "description": "The time now, with alarms and timers: set one here and it rings here until dismissed or given five more minutes. Under the time is what is coming: reminders, and what is on today. A reminder is a record, so the calendar shows it too.",
   "icon": "◷",
   "use": { "when": "a person wants to know the time, be reminded at a time, or time something: in a corner, a header, or a pane.", "not": "a whole month, which is a calendar, or a date to ask for, which is a when-field.", "with": "a calendar, which shows the same reminders on their days." },
   "props": {
@@ -10,7 +10,7 @@
     "required": [],
     "properties": {
       "label": { "type": "string", "default": "Clock", "description": "Names the region, so landmark navigation can reach it." },
-      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full", "description": "glance is the time and anything ringing, for a header or a corner. full adds the forms to set a timer or an alarm and what is coming up." },
+      "detail": { "title": "How much to show", "type": "string", "enum": ["glance", "full"], "default": "full", "description": "glance is the time and anything ringing; full adds the forms to set a timer or an alarm and what is coming." },
       "sound": { "title": "Ring out loud", "type": "boolean", "default": true, "description": "Whether a ringing reminder makes a sound as well as showing." },
       "now": { "type": "string", "description": "The moment shown, as RFC 3339. Filled in by the server; the page keeps it ticking." },
       "time": { "type": "string", "description": "The time shown, as HH:MM. Filled in by the server." },

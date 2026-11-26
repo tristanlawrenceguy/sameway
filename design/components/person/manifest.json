@@ -1,7 +1,7 @@
 {
   "name": "person",
   "version": "1.1.0",
-  "description": "Someone, by name, with the colour they have everywhere in the workspace: who a record is for, who is here, who changed something.",
+  "description": "Someone, by name, with their colour: who a record is for, who is here, who changed something.",
   "icon": "●",
   "use": {
     "when": "a person is named beside what concerns them: who a task is for, who else is here.",
@@ -18,13 +18,13 @@
       "name": {
         "type": "string",
         "minLength": 1,
-        "description": "What the person is called, in full, as they write it. Never cut short: a long name wraps, and a name in a script written right to left keeps its own direction."
+        "description": "Their name in full, as they write it."
       },
       "colour": {
         "type": "integer",
         "minimum": 1,
         "maximum": 6,
-        "description": "Their colour, 1 to 6, the same on every computer (chat.PersonColour of their login). Left out, the dot is neutral."
+        "description": "Their colour, the same everywhere. Left out, the dot is neutral."
       },
       "label": {
         "type": "string",
