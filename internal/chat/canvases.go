@@ -50,9 +50,9 @@ var canvasOps = []Op{
 	{Title: "Make a tab",
 		Doing: func(a callArgs) string { return "Adding a tab" + called(a.Name) },
 		Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.createCanvas(a.Name) },
-		Tool: llm.Tool{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own. Use it when the person asks for a separate page or tab, or when what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
+		Tool: llm.Tool{Name: "create_canvas", Description: "Add a tab: a new canvas beside Home with blocks of its own, when the person asks for a separate page or tab, or what they want does not belong with what is already on the canvas. Returns the canvas id, which add_component takes as canvas.",
 			Schema: obj(map[string]any{
-				"name": map[string]any{"type": "string", "description": "The tab's name, in the person's words, one or two of them: Work, Garden, Rome."},
+				"name": map[string]any{"type": "string", "description": "Its name, in the person's words, one or two of them: Work, Garden, Rome."},
 			}, "name")}, Offered: has(records.CanvasType)},
 	{Title: "Remove a tab", Traits: Traits{Destructive: true, Idempotent: true},
 		Doing: saying("Removing a tab"),

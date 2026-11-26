@@ -24,17 +24,17 @@ var arrangeOp = Op{Title: "Lay a tab out", Traits: Traits{Idempotent: true},
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.arrangeCall(call.Args) },
 	Tool: llm.Tool{
 		Name:        "arrange_canvas",
-		Description: "Lay out a whole tab in one change: list its blocks (from the canvas listing) in the order they should be read, top to bottom, each with the width and place it should have. The list order becomes the order on the page; what an item leaves out stays as it is, and a block not listed keeps its order after the ones listed, which the answer names. Use it after adding something, to move and reshape what was already there so the page reads well: what matters most first, related things together, rows of twelve filled, headings in order. Blocks in the header and footer may be left out. Blocks to take away (one that cannot be shown, repeats another, or is left over) go in remove instead, in the same change. One Undo takes the whole arrangement back. Refused, with nothing changed, when a block is not on the tab or listed twice, or a heading would skip a level.",
+		Description: "Lay out a whole tab in one change that one Undo takes back: list its blocks in the order they should be read, top to bottom, each with the width and place it should have. What an item leaves out stays as it is, and a block not listed follows the ones listed, as the answer says. Use it after adding something, to move and reshape what was already there so the page reads well. Blocks to take away go in remove, in the same change. A list that cannot be laid out changes nothing, and the error says why.",
 		Schema: obj(map[string]any{
-			"blocks": map[string]any{"type": "array", "description": "Every block on the tab, in reading order.", "items": obj(map[string]any{
+			"blocks": map[string]any{"type": "array", "description": "The tab's blocks, in reading order.", "items": obj(map[string]any{
 				"id":     map[string]any{"type": "string", "description": "Block id from the canvas listing."},
-				"span":   map[string]any{"type": "integer", "description": "Width in columns of twelve; the spans in a row should add up to 12."},
-				"region": map[string]any{"type": "string", "enum": []string{"main", "left", "right", "header", "footer"}},
-				"frame":  map[string]any{"type": "string", "enum": []string{"card", "bare"}},
-				"size":   map[string]any{"type": "string", "enum": []string{"full", "compact", "icon"}},
+				"span":   map[string]any{"type": "integer", "description": "Width in columns of twelve; a row's spans should add up to 12."},
+				"region": map[string]any{"type": "string", "enum": regions},
+				"frame":  map[string]any{"type": "string", "enum": frames},
+				"size":   map[string]any{"type": "string", "enum": sizes},
 			}, "id")},
-			"remove": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of blocks to take off the tab in the same change, left out of blocks."},
-			"canvas": map[string]any{"type": "string", "description": "The tab, as a canvas id; empty string is Home. Defaults to the tab the person is looking at."},
+			"remove": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Ids of blocks to take off the tab, left out of blocks."},
+			"canvas": map[string]any{"type": "string", "description": "A canvas id; empty string is Home. Defaults to the tab the person is looking at."},
 		}, "blocks"),
 	}}
 
@@ -68,7 +68,7 @@ func mustJSON(v any) json.RawMessage {
 
 func (s *Service) arrange(canvas string, items []arrangeItem, remove []string) toolResult {
 	if !s.HasCanvas(canvas) {
-		return fail("no canvas with id %q; the tabs and their ids are listed in the prompt, and \"\" is Home", canvas)
+		return fail("%v", noCanvas(canvas))
 	}
 	before := s.canvasBlocks(canvas)
 	byID := map[string]*store.Record{}
