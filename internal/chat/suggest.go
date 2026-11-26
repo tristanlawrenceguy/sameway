@@ -41,13 +41,13 @@ var suggestOps = []Op{{Title: "Suggest changes to some writing",
 		return s.suggestEdits(a.Type, a.ID, a.Field, a.Edits)
 	},
 	Tool: llm.Tool{Name: "suggest_edits",
-		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. Judge each case: a plain command (fix the spelling) you just do with update_record; suggest when the changes are judgement calls on their words. Do only the help asked for, keep their voice, small changes, at most 15. Feedback on structure is said in words, not suggested. Copy each passage exactly from get_record, long enough to occur once.",
+		Description: "Suggest changes to a person's writing instead of making them; they accept or decline each on its page. A plain command (fix the spelling) you just do with update_record; suggest when the changes are judgement calls on their words. Do only the help asked for, keep their voice, small changes. Feedback on structure is said in words, not suggested.",
 		Schema: obj(map[string]any{
 			"type":  map[string]any{"type": "string", "description": "The record's content type, such as note."},
 			"id":    map[string]any{"type": "string", "description": "The record's id."},
 			"field": map[string]any{"type": "string", "description": "The field; its main text when left out."},
 			"edits": map[string]any{"type": "array", "items": obj(map[string]any{
-				"passage":     map[string]any{"type": "string", "description": "The words now, exactly."},
+				"passage":     map[string]any{"type": "string", "description": "The words now, copied exactly."},
 				"replacement": map[string]any{"type": "string", "description": "What replaces them; empty takes them out."},
 				"why":         map[string]any{"type": "string", "description": "Why, in a short sentence."},
 				"kind":        map[string]any{"type": "string", "enum": []string{"fix", "clarity", "style", "structure"}, "description": "fix: spelling, grammar, typos; clarity; style; structure: moving or cutting."},

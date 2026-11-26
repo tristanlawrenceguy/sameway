@@ -34,7 +34,7 @@ const askSystem = `You answer a question for someone who reached this Sameway wo
 
 // askTool is the tool as it is listed.
 var askTool = tool{Name: "ask",
-	Description: "Ask this workspace a question in words, instead of finding your own way through describe, find_records and get_record: \"what is on next week?\", \"is there a note about the boiler?\". It is answered by reading what you may read here, and nothing more, with the pages it read from. On a published workspace you may also ask for something, a time to meet or a message left, with who: it waits for the owner's yes, and the answer gives the address that says what became of it. " + records.DataNotInstructions,
+	Description: "Ask this workspace a question in words (\"what is on next week?\") instead of reading it yourself. It is answered from what you may read here, and nothing more, with the pages it read. On a published workspace you may also ask for something, such as a time to meet, with who: it waits for the owner's yes, and the answer gives the address that says what became of it. " + records.DataNotInstructions,
 	InputSchema: map[string]any{"type": "object", "properties": map[string]any{
 		"question": map[string]any{"type": "string", "maxLength": 1000},
 		"who":      map[string]any{"type": "string", "maxLength": 160, "description": "on a published workspace, your name and how to reach you, for anything you ask for"},
