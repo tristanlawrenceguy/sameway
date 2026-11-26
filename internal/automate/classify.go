@@ -83,12 +83,14 @@ func (s *Service) ask(ctx context.Context, system, question string, pics []llm.I
 	return json.Unmarshal([]byte(raw), out)
 }
 
-const classifySystem = `You tag a record for a person: an email or a message that came to them, or something they wrote. Each tag is defined by the person in their own words, where "I", "me" and "my" are the person, never you.
-Read what the record asks of the person or is about, then give each tag whose definition is true of it, as written; none may be.
+// tagSystem opens both ways of asking, all the tags at once or one apart.
+const tagSystem = `You tag a record for a person: an email or a message that came to them, or something they wrote. Each tag is defined by the person in their own words, where "I", "me" and "my" are the person, never you.
+Read what the record asks of the person or is about, then `
+
+const classifySystem = tagSystem + `give each tag whose definition is true of it, as written; none may be.
 Answer with JSON only: {"tags": [{"tag": "...", "why": "four to eight words"}]}`
 
-const oneTagSystem = `You decide whether one tag fits a record for a person: an email or a message that came to them, or something they wrote. The tag is defined by the person in their own words, where "I", "me" and "my" are the person, never you.
-Read what the record asks of the person or is about, then say whether the definition is true of it.
+const oneTagSystem = tagSystem + `say whether the one tag's definition is true of it.
 Answer with JSON only: {"fits": true or false, "why": "four to eight words"}`
 
 // chosen is a tag the model gave, and why.
@@ -139,27 +141,23 @@ func (s *Service) Classify(ctx context.Context, action *store.Record, typeName, 
 	if len(picks) == 0 && len(alone) > 0 {
 		picks = []chosen{{alone[0].Name, "no other tag fits"}}
 	}
-	outs := s.checked(ctx, action, t, rec, words, picks, defs)
 	var said, given []string
 	if joinedTo != "" {
 		said = append(said, joinedTo)
 	}
 	ops := read
-	for _, o := range keepAlone(outs, defs) {
-		if o.dropped != "" {
-			said = append(said, o.tag+" (not given: "+o.dropped+")")
-			continue
-		}
+	for _, o := range s.checked(ctx, action, t, rec, words, picks, defs) {
 		ops = append(ops, s.giveTag(t, rec, o.tag)...)
 		given = append(given, o.tag)
 		cl := map[string]any{"record": t.Name + "/" + rec.ID, "tag": o.tag, "why": o.why, "action": action.ID, "state": o.state}
+		how := "suggested"
 		if o.state == "confirmed" {
-			cl["confirmed_by"] = "judgement"
+			cl["confirmed_by"], how = "judgement", "kept, as you chose before"
 		}
 		if done, err := s.Apply(records.Op{Type: records.ClassificationType, After: cl}); err == nil {
 			ops = append(ops, done...)
 		}
-		said = append(said, o.tag+" ("+map[string]string{"suggested": "suggested", "confirmed": "kept, as you chose before"}[o.state]+": "+o.why+")")
+		said = append(said, o.tag+" ("+how+": "+o.why+")")
 	}
 	title, _ := action.Fields["title"].(string)
 	name := records.Name(s.Store, t, rec)
@@ -246,7 +244,7 @@ func (s *Service) pickTags(ctx context.Context, action *store.Record, defs []Tag
 
 // outcome is what becomes of one tag picked, after the check.
 type outcome struct {
-	tag, why, state, dropped string
+	tag, why, state string
 }
 
 // checked is each tag picked as the check with the person's past choices
@@ -265,29 +263,6 @@ func (s *Service) checked(ctx context.Context, action *store.Record, t *schema.T
 		outs = append(outs, o)
 	}
 	return outs
-}
-
-// keepAlone drops a tag given only when no other fits, when another is
-// given: the check may have changed one into the other.
-func keepAlone(outs []outcome, defs []Tag) []outcome {
-	isAlone := map[string]bool{}
-	for _, d := range defs {
-		isAlone[fold.Key(d.Name)] = d.Alone
-	}
-	other := false
-	for _, o := range outs {
-		other = other || o.dropped == "" && !isAlone[fold.Key(o.tag)]
-	}
-	if !other {
-		return outs
-	}
-	var kept []outcome
-	for _, o := range outs {
-		if !isAlone[fold.Key(o.tag)] {
-			kept = append(kept, o)
-		}
-	}
-	return kept
 }
 
 func aloneTag(defs []Tag, tag string) bool {

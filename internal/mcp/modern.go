@@ -34,34 +34,28 @@ func metaOf(params json.RawMessage) meta {
 	return p.Meta
 }
 
-// modernVersion is the revision a request names, if it names one.
-func modernVersion(params json.RawMessage) (string, bool) {
-	v := metaOf(params).Version
-	return v, v != ""
-}
-
 // modern answers a request that names its revision: refused with the
 // revisions this server has when it names another, otherwise answered as
 // any request is, its client named by what it says it is, and its result
 // marked complete with who answered.
-func (s *Server) modern(ctx context.Context, req request, version string) (any, *rpcError) {
-	if version != modernProtocol {
+func (s *Server) modern(ctx context.Context, req request, m meta) (any, *rpcError) {
+	if m.Version != modernProtocol {
 		return nil, &rpcError{codeUnsupportedVersion, "Unsupported protocol version",
-			map[string]any{"supported": []string{modernProtocol}, "requested": version}}
+			map[string]any{"supported": []string{modernProtocol}, "requested": m.Version}}
 	}
 	var info clientInfo
-	if raw := metaOf(req.Params).Client; json.Unmarshal(raw, &info) == nil && (info.Name != "" || info.Title != "") {
+	if json.Unmarshal(m.Client, &info) == nil && (info.Name != "" || info.Title != "") {
 		connOf(ctx).call(info) // agent.go
 	}
 	result, rpcErr := s.answer(ctx, req)
-	if m, ok := result.(map[string]any); ok {
-		m["resultType"] = "complete"
-		m["_meta"] = map[string]any{metaServer: s.info()}
+	if r, ok := result.(map[string]any); ok {
+		r["resultType"] = "complete"
+		r["_meta"] = map[string]any{metaServer: s.info()}
 		if req.Method == "tools/list" {
 			// The list is the same order every time (the registry's), so a
 			// client may keep it; but types and permissions change it, so
 			// only for this client and not for long.
-			m["ttlMs"], m["cacheScope"] = 0, "private"
+			r["ttlMs"], r["cacheScope"] = 0, "private"
 		}
 	}
 	return result, rpcErr
@@ -71,14 +65,19 @@ func (s *Server) info() map[string]any {
 	return map[string]any{"name": "sameway", "version": s.Version}
 }
 
+// capabilities are what the server offers, on initialize and on discover.
+// The list changes for the assistant (turn_tools.go): Claude Code reads it
+// again on the notification only when told so.
+func (s *Server) capabilities() map[string]any {
+	return map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}}
+}
+
 // discover is server/discover: the revisions, what it offers, who it is.
-// The list changes for the assistant (turn_tools.go), as initialize says
-// too: Claude Code reads it again on the notification only when told so.
 func (s *Server) discover() map[string]any {
 	return map[string]any{
 		"resultType":        "complete",
 		"supportedVersions": []string{modernProtocol},
-		"capabilities":      map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}},
+		"capabilities":      s.capabilities(),
 		"instructions":      instructions,
 		"_meta":             map[string]any{metaServer: s.info()},
 		"ttlMs":             0,
