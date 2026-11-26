@@ -52,7 +52,7 @@ var phoneAskOp = Op{Title: "Phone a business with one question",
 	},
 	Offered: func(s *Service, _ *llm.Tool) bool { return s.Phones != nil && s.Phones() },
 	Tool: llm.Tool{Name: "phone_to_ask",
-		Description: "Phone a business from the person's Twilio number to ask it one question, put to the person word for word first (so call it rather than asking in words). The call says it is an AI assistant calling for them, asks only that question and hangs up; the answer is told to the person when it comes. It books, pays and agrees to nothing.",
+		Description: "Phone a business from the person's Twilio number to ask it one question, put to the person word for word first (so call it rather than asking in words). The call says it is an AI calling for them and asks only that; the answer is told to the person when it comes.",
 		Schema: obj(map[string]any{
 			"number":   map[string]any{"type": "string", "description": "The business's number in international form: +441234567890."},
 			"who":      map[string]any{"type": "string", "description": "The business's name."},
@@ -97,8 +97,5 @@ func (s *Service) Phoned(who, question, heard string, picked bool) {
 		said = fmt.Sprintf("%s did not answer the phone, so \"%s\" was not asked.", who, question)
 	}
 	records.Record(s.Store, "system", records.Change{Action: "heard on the phone", Detail: trim.Line(said, 300)})
-	s.Say(said)
-	if s.Automate != nil && s.Automate.Tell != nil {
-		s.Automate.Tell("Phone answer", said, "/today")
-	}
+	s.tell("Phone answer", said, "/today") // email_conversation.go
 }
