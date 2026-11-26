@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
+	"maps"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/export"
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/search"
@@ -27,9 +27,10 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	if !s.reachOf(ctx).public {
 		return "", false, false
 	}
+	names := s.published()
 	types := map[string]bool{}
-	if s.Published != nil {
-		types = s.Published()
+	for _, n := range names {
+		types[n] = true
 	}
 	switch name {
 	case "search", "fetch":
@@ -55,11 +56,6 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	}
 	if name == "describe" {
 		var out []any
-		var names []string
-		for t := range types {
-			names = append(names, t)
-		}
-		sort.Strings(names)
 		for _, n := range names {
 			if t, ok := s.App.Types.Get(n); ok {
 				out = append(out, map[string]any{"name": t.Name, "description": t.Description, "fields": t.JSONSchema()})
@@ -73,27 +69,28 @@ func (s *Server) publicCall(ctx context.Context, name string, args json.RawMessa
 	}
 	json.Unmarshal(args, &a)
 	if !types[a.Type] {
-		return "only published content can be read here: " + joined(types), true, true
+		if len(names) == 0 {
+			return "only published content can be read here: nothing is published", true, true
+		}
+		return "only published content can be read here: " + strings.Join(names, ", "), true, true
 	}
 	// The service as the internet has it, so written_by names nobody.
 	text, isErr := s.App.Chat.For(records.Visitor{Access: records.Public}).Call(name, args)
 	return text, isErr, true
 }
 
-func joined(types map[string]bool) string {
+// published is the content types published just now, in order.
+func (s *Server) published() []string {
 	var names []string
-	for t := range types {
-		names = append(names, t)
+	if s.Published != nil {
+		for n, is := range s.Published() {
+			if is {
+				names = append(names, n)
+			}
+		}
 	}
-	sort.Strings(names)
-	if len(names) == 0 {
-		return "nothing is published"
-	}
-	out := names[0]
-	for _, n := range names[1:] {
-		out += ", " + n
-	}
-	return out
+	slices.Sort(names)
+	return names
 }
 
 // ChatGPT's connectors and deep research, and others after them, look for
@@ -103,17 +100,17 @@ func joined(types map[string]bool) string {
 // address to cite.
 
 var publicSearchTools = []tool{
-	{Name: "search", Description: "Search what is published in this Sameway workspace: every published record whose words contain the query. Returns results with id, title and url; read one with fetch. " +
-		"Search everything first: counts and total say how many were found of each kind, and said says it in words; then, if the counts show where, search again with type for that kind only. " +
-		"At most 50 come back at a time; when pages is more than page, ask for the next page.",
+	{Name: "search", Description: "Search what is published in this Sameway workspace: every published record whose words contain the query, as results with id, title and url; read one with fetch. " +
+		"counts and total say how many were found of each kind; type searches one kind only. " +
+		"50 come back at a time; when pages is more than page, ask for the next page.",
 		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"query"},
 			"properties": map[string]any{
-				"query": map[string]any{"type": "string", "description": "Words to find."},
-				"type":  map[string]any{"type": "string", "description": "Only this published kind of thing, as describe lists them. Leave it out to search everything."},
+				"query": str("Words to find."),
+				"type":  str("Only this published kind, as describe lists them."),
 				"page":  map[string]any{"type": "integer", "minimum": 1, "description": "Which page of results, from 1."}}}},
-	{Name: "fetch", Description: "Read one published record in full, by the id search gave: its title, its text, its fields, and the address of its page.",
+	{Name: "fetch", Description: "Read one published record in full, by the id search gave: its title, text, fields and the address of its page.",
 		InputSchema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"id"},
-			"properties": map[string]any{"id": map[string]any{"type": "string", "description": "The id from search, such as note/abc123."}}}},
+			"properties": map[string]any{"id": str("The id from search, such as note/abc123.")}}},
 }
 
 type baseKey struct{}
@@ -230,34 +227,15 @@ func (s *Server) writers() *records.Writers {
 // the content types it takes, it names only the published ones, so the
 // rest of the workspace is not so much as listed.
 func (s *Server) onlyPublished(t tool) tool {
-	schema := t.InputSchema
-	props, _ := schema["properties"].(map[string]any)
+	props, _ := t.InputSchema["properties"].(map[string]any)
 	typ, _ := props["type"].(map[string]any)
 	if typ == nil {
 		return t
 	}
-	var names []string
-	if s.Published != nil {
-		for n := range s.Published() {
-			names = append(names, n)
-		}
-	}
-	sort.Strings(names)
-	nt := map[string]any{}
-	for k, v := range typ {
-		nt[k] = v
-	}
-	nt["enum"] = names
-	np := map[string]any{}
-	for k, v := range props {
-		np[k] = v
-	}
-	np["type"] = nt
-	ns := map[string]any{}
-	for k, v := range schema {
-		ns[k] = v
-	}
-	ns["properties"] = np
-	t.InputSchema = ns
+	// Copies, since the schema is the registry's own.
+	typ, props, t.InputSchema = maps.Clone(typ), maps.Clone(props), maps.Clone(t.InputSchema)
+	typ["enum"] = append([]string{}, s.published()...)
+	props["type"] = typ
+	t.InputSchema["properties"] = props
 	return t
 }

@@ -63,6 +63,11 @@ type request struct {
 	Params  json.RawMessage `json:"params"`
 }
 
+// notification says the request has no id, so it wants no answer.
+func (r request) notification() bool {
+	return len(r.ID) == 0 || string(r.ID) == "null"
+}
+
 type response struct {
 	JSONRPC string          `json:"jsonrpc"`
 	ID      json.RawMessage `json:"id"`
@@ -108,12 +113,9 @@ func (s *Server) Serve(ctx context.Context) error {
 			s.write(response{JSONRPC: "2.0", ID: json.RawMessage("null"), Error: &rpcError{codeParse, "the line was not valid JSON: " + err.Error(), nil}})
 			continue
 		}
-		notification := len(req.ID) == 0 || string(req.ID) == "null"
-		result, rpcErr := s.handle(ctx, req)
-		if notification {
-			continue
+		if result, rpcErr := s.handle(ctx, req); !req.notification() {
+			s.write(response{JSONRPC: "2.0", ID: req.ID, Result: result, Error: rpcErr})
 		}
-		s.write(response{JSONRPC: "2.0", ID: req.ID, Result: result, Error: rpcErr})
 	}
 	return sc.Err()
 }
@@ -131,8 +133,8 @@ func (s *Server) write(resp response) {
 // handle answers one request: as the revision it names in _meta, when it
 // names one (modern.go), or as it always has.
 func (s *Server) handle(ctx context.Context, req request) (any, *rpcError) {
-	if version, ok := modernVersion(req.Params); ok {
-		return s.modern(ctx, req, version)
+	if m := metaOf(req.Params); m.Version != "" {
+		return s.modern(ctx, req, m)
 	}
 	return s.answer(ctx, req)
 }
@@ -161,8 +163,8 @@ func (s *Server) answer(ctx context.Context, req request) (any, *rpcError) {
 		connOf(ctx).introduce(req.Params)
 		return map[string]any{
 			"protocolVersion": protocolVersion,
-			"capabilities":    map[string]any{"tools": map[string]any{"listChanged": s.Only != nil}},
-			"serverInfo":      map[string]any{"name": "sameway", "version": s.Version},
+			"capabilities":    s.capabilities(),
+			"serverInfo":      s.info(),
 			"instructions":    instructions,
 		}, nil
 	case "server/discover":
