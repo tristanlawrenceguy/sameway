@@ -24,20 +24,24 @@ var arrangementOp = Op{Title: "Add a ready-made arrangement",
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.addArrangement(a.Name, a.Fills) },
 	Tool: llm.Tool{
 		Name:        "add_arrangement",
-		Description: "Add a whole arrangement of blocks for a job the person named, laid out as the catalogue says, in one call. Each block shows the person's own records as they are (their tasks, events, notes, habits), kept current, and says so on the page when there are none yet; nothing in it is example text. The result says what each block shows. To put things on it, create the records the person gave you with create_record; never invent any. An arrangement that needs a type the workspace lacks adds nothing and says how to make it.",
-		Schema: map[string]any{"type": "object", "properties": map[string]any{
+		Description: "Add a whole arrangement of blocks for a job the person named, laid out as the catalogue says, in one call. Each block shows the person's own records, kept current, and says so on the page when there are none yet. To put things on it, create the records the person gave you with create_record; never invent any. An arrangement that needs a type the workspace lacks adds nothing and says how to make it.",
+		Schema: obj(map[string]any{
 			"name":  map[string]any{"type": "string", "description": "An arrangement from the catalogue."},
-			"fills": map[string]any{"type": "object", "description": "Props to change on a block, by block key, such as its label or conditions: {\"todo\": {\"label\": \"Due soon\"}}. What a block lists comes from records and cannot be filled in."},
-		}, "required": []string{"name"}, "additionalProperties": false},
+			"fills": map[string]any{"type": "object", "description": "Props to change on a block, by block key: {\"todo\": {\"label\": \"Due soon\"}}. What a block lists comes from records and cannot be filled in."},
+		}, "name"),
 	}, Offered: func(s *Service, t *llm.Tool) bool {
 		// The arrangements as the catalogue has them now.
-		var names []string
-		for _, a := range s.Registry.Arrangements() {
-			names = append(names, a.Name)
-		}
-		withProp(t, "name", map[string]any{"type": "string", "enum": names, "description": "An arrangement from the catalogue."})
+		withProp(t, "name", map[string]any{"type": "string", "enum": s.arrangementNames(), "description": "An arrangement from the catalogue."})
 		return true
 	}}
+
+func (s *Service) arrangementNames() []string {
+	var names []string
+	for _, a := range s.Registry.Arrangements() {
+		names = append(names, a.Name)
+	}
+	return names
+}
 
 // addArrangement adds each block in order, on the tab the person is
 // looking at, and reports every one so each arrives and can be undone on
@@ -45,11 +49,7 @@ var arrangementOp = Op{Title: "Add a ready-made arrangement",
 func (s *Service) addArrangement(name string, fills map[string]any) toolResult {
 	a, ok := s.Registry.Arrangement(name)
 	if !ok {
-		var names []string
-		for _, x := range s.Registry.Arrangements() {
-			names = append(names, x.Name)
-		}
-		return fail("no arrangement %q; the arrangements are %s", name, schema.Names(names))
+		return fail("no arrangement %q; the arrangements are %s", name, schema.Names(s.arrangementNames()))
 	}
 	if missing := s.missingNeeds(a); missing != "" {
 		return fail("nothing added: %s", missing)
