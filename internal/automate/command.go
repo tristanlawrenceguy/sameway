@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/tristanlawrenceguy/sameway/internal/records"
-	"github.com/tristanlawrenceguy/sameway/internal/relate"
 	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
@@ -32,25 +31,31 @@ import (
 // CommandTimeout bounds one run, so a hung command cannot hold a turn.
 const CommandTimeout = 60 * time.Second
 
-// command runs an accepted command, or asks the person to accept it.
-func (s *Service) command(ctx context.Context, rec *store.Record, title string) Result {
-	line, _ := rec.Fields["command"].(string)
+// ready is a command action's line, its program and arguments, and
+// where it runs, or why it cannot run.
+func (s *Service) ready(rec *store.Record) (line string, args []string, dir string, err error) {
+	title, _ := rec.Fields["title"].(string)
+	line, _ = rec.Fields["command"].(string)
 	line = strings.TrimSpace(line)
-	if line == "" {
-		return fail("action %s has no command to run", title)
-	}
-	args := tokens(line)
-	if len(args) == 0 {
-		return fail("action %s has no program to run", title)
+	if args = tokens(line); len(args) == 0 {
+		return "", nil, "", fmt.Errorf("action %s has no command to run", title)
 	}
 	if !s.allowed(args[0]) {
-		return fail("action %s would run %s, which this workspace has not allowed. Command actions run only programs named in actions.allow in workspace.yaml (allowed now: %s); add %s there, by asking or by editing the file, and the button will work", title, args[0], s.allowedWords(), programName(args[0]))
+		return "", nil, "", fmt.Errorf("action %s would run %s, which this workspace has not allowed. Command actions run only programs named in actions.allow in workspace.yaml (allowed now: %s); add %s there, by asking or by editing the file, and the button will work", title, args[0], s.allowedWords(), programName(args[0]))
 	}
-	dir, err := s.folderFor(rec)
+	if dir, err = s.folderFor(rec); err != nil {
+		return "", nil, "", fmt.Errorf("action %s: %v", title, err)
+	}
+	return line, args, dir, nil
+}
+
+// command runs an accepted command, or asks the person to accept it.
+func (s *Service) command(ctx context.Context, rec *store.Record, title string) Result {
+	line, args, dir, err := s.ready(rec)
 	if err != nil {
-		return fail("action %s: %v", title, err)
+		return fail("%v", err)
 	}
-	if accepted, _ := rec.Fields["accepted"].(string); accepted != line {
+	if rec.Fields["accepted"] != line {
 		r := s.Chat.Ask(Question{"Let your “" + title + "” button run a program on this computer?",
 			"Pressing it would run " + line + " as you, with access to your files, every time, without asking again. What it does can't be undone from Sameway, so only say yes if you asked for this button.",
 			"Yes, let it run", "No, don't"},
@@ -67,10 +72,7 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out
 	err = cmd.Run()
-	answer := strings.TrimSpace(out.String())
-	if len([]rune(answer)) > 2000 {
-		answer = string([]rune(answer)[:2000])
-	}
+	answer := clipWords(strings.TrimSpace(out.String()), 2000)
 	code := 0
 	if err != nil {
 		code = -1
@@ -83,41 +85,15 @@ func (s *Service) command(ctx context.Context, rec *store.Record, title string) 
 			answer = strings.TrimSpace(answer + "\n(stopped after " + CommandTimeout.String() + ")")
 		}
 	}
-	res := Result{Text: fmt.Sprintf("%s finished with exit code %d", title, code), Answer: answer}
-	if answer != "" {
-		res.Text += ": " + answer
-	}
-	res.Changes = append(res.Changes, records.Change{Action: "ran", Component: records.ActionType, ID: rec.ID,
-		Detail: fmt.Sprintf("%s (exit %d)", title, code), Href: relate.Page(records.ActionType, rec.ID)})
-	if code != 0 {
-		res.IsErr = true
-		return res
-	}
-	if show, _ := rec.Fields["show"].(bool); show && answer != "" {
-		if c, err := s.Chat.Show(rec, title, answer); err == nil {
-			res.Changes = append(res.Changes, c)
-		} else {
-			res.Text += ". Could not put it on the canvas: " + err.Error()
-		}
-	}
-	return res
+	return s.answered(rec, fmt.Sprintf("%s finished with exit code %d", title, code), fmt.Sprintf("%s (exit %d)", title, code), answer, code != 0)
 }
 
 // Runs says whether a command action would run as it stands, without
 // asking: a program the workspace allows, in the workspace, on a line the
 // person accepted.
 func (s *Service) Runs(rec *store.Record) bool {
-	line, _ := rec.Fields["command"].(string)
-	line = strings.TrimSpace(line)
-	args := tokens(line)
-	if len(args) == 0 || !s.allowed(args[0]) {
-		return false
-	}
-	if _, err := s.folderFor(rec); err != nil {
-		return false
-	}
-	accepted, _ := rec.Fields["accepted"].(string)
-	return accepted == line
+	line, _, _, err := s.ready(rec)
+	return err == nil && rec.Fields["accepted"] == line
 }
 
 // allowed says whether a program is one the workspace lets actions run,
@@ -196,26 +172,23 @@ func tokens(line string) []string {
 	return out
 }
 
-// Accept is what a person's Yes on the card does: the command line as it
-// stands is accepted for good, then run. The accepted line is kept, not a
-// flag, so an edited command asks again.
+// Accept is what a person's Yes on the card does. What the action
+// sends, or its command line, as it stands is accepted for good: kept, not
+// a flag, so an edited action asks again. A command then runs; one that
+// sends does so on its own from the next time it is set off.
 func (s *Service) Accept(ctx context.Context, id string) Result {
 	rec, err := s.Store.Get(records.ActionType, id)
 	if err != nil {
 		return fail("no action with id %s", id)
 	}
-	line, _ := rec.Fields["command"].(string)
-	line = strings.TrimSpace(line)
-	title, _ := rec.Fields["title"].(string)
-	if what := Sends(rec); what != "" { // on_its_own.go: accepted to send on its own, from the next time it is set off
-		if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": what}}); err != nil {
-			return fail("could not accept action %s: %v", id, err)
-		}
-		return Result{Text: title + " is accepted: from now on it sends on its own each time it is set off"}
-	}
-	if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": line}}); err != nil {
+	what := Shown(rec)
+	if _, err := s.Apply(records.Op{Type: records.ActionType, ID: id, After: map[string]any{"accepted": what}}); err != nil {
 		return fail("could not accept action %s: %v", id, err)
 	}
-	rec.Fields["accepted"] = line
+	title, _ := rec.Fields["title"].(string)
+	if rec.Fields["kind"] != "command" {
+		return Result{Text: title + " is accepted: from now on it sends on its own each time it is set off"}
+	}
+	rec.Fields["accepted"] = what
 	return s.command(ctx, rec, title)
 }
