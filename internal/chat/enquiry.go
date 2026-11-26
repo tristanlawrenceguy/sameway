@@ -186,8 +186,8 @@ var answerEnquiryOp = Op{Title: "Answer what someone's Sameway asked",
 	},
 	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult { return s.answerEnquiry(call.Args) },
 	Tool: llm.Tool{Name: "answer_enquiry",
-		Description: "Answer a question another person's own Sameway asked this one and that waits for the owner (an enquiry whose state is waiting): Sameway works the answer out itself, the times the owner is busy and nothing else. It is always put to the owner first, and nothing is told until they say yes.",
-		Schema:      obj(map[string]any{"id": map[string]any{"type": "string", "description": "the enquiry's id"}}, "id")},
+		Description: "Answer a waiting enquiry, what another person's Sameway asked this one: it is told the times the owner is busy, nothing else. Put to the owner first.",
+		Schema:      obj(map[string]any{"id": map[string]any{"type": "string"}}, "id")},
 	Offered: has(records.EnquiryType)}
 
 // enquiryOf is the waiting enquiry a call names, who asked, and the time

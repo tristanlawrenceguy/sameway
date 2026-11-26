@@ -7,6 +7,7 @@ import (
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
+	"github.com/tristanlawrenceguy/sameway/internal/store"
 )
 
 // Who else may open this workspace, from their own devices over Tailscale,
@@ -21,7 +22,7 @@ var letInOp = Op{Title: "Let a person in",
 	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.letIn(letInOf(call.Args)) },
 	Tool: llm.Tool{
 		Name:        "let_in",
-		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away, when the owner asks: \"let Bob edit\", \"Carol can look\", \"stop Bob\". They are matched by the email they sign in to Tailscale with (to take access from someone invited on the Wi-Fi, who has no email, give their name instead), and reach the workspace once the owner shares this machine with them in Tailscale (or they are on the same tailnet). view reads only; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step with this one (for when they host it too, with their own assistant); none takes access away. Giving access is put to the owner as a question for you, and nothing changes until they say yes; taking it away happens at once.",
+		Description: "Give someone access to this workspace from their own devices over Tailscale, or take it away. email: the one they sign in to Tailscale with; name alone only to take access from someone who has no email. access: view reads; edit changes content and the canvas and presses buttons; host is edit, and their own computer keeps a full copy of the workspace in step; none takes access away, at once. Giving access is put to the owner first.",
 		Schema: obj(map[string]any{
 			"email":  map[string]any{"type": "string"},
 			"name":   map[string]any{"type": "string"},
@@ -72,11 +73,16 @@ func (s *Service) letInAsks(_ toolArgs, call llm.ToolCall) (toolResult, bool) {
 	return fail("access is view, edit or none, not %q", a.Access), true
 }
 
-func letInQuestion(a letInArgs) question {
-	who := a.Email
-	if a.Name != "" {
-		who = a.Name + " (" + a.Email + ")"
+// nameAndEmail is someone as a question names them: Bob (bob@example.com).
+func nameAndEmail(name, email string) string {
+	if name == "" {
+		return email
 	}
+	return name + " (" + email + ")"
+}
+
+func letInQuestion(a letInArgs) question {
+	who := nameAndEmail(a.Name, a.Email)
 	can := "read everything here except your conversations with the assistant"
 	ask, yes := "Let "+who+" look at this workspace?", "Yes, let them look"
 	switch a.Access {
@@ -95,7 +101,6 @@ func letInQuestion(a letInArgs) question {
 // letIn sets a person's access, making the person when there is none with
 // that email yet.
 func (s *Service) letIn(a letInArgs) toolResult {
-	a.Email = strings.ToLower(strings.TrimSpace(a.Email))
 	access := a.Access
 	if access == "none" {
 		access = ""
@@ -104,18 +109,7 @@ func (s *Service) letIn(a letInArgs) toolResult {
 	if access == "" {
 		return s.letOut(a, p) // invite.go
 	}
-	op := records.Op{Type: records.PersonType, After: map[string]any{"access": access}}
-	var name string
-	if p == nil {
-		name = a.Name
-		if name == "" {
-			name, _, _ = strings.Cut(a.Email, "@")
-		}
-		op.After = map[string]any{"name": name, "email": a.Email, "access": access}
-	} else {
-		op.ID = p.ID
-		name, _ = p.Fields["name"].(string)
-	}
+	op, name := onPerson(p, a.Name, a.Email, "access", access)
 	done, err := s.Apply(op)
 	if err != nil && p == nil {
 		return fail("could not add them: %v", err)
@@ -127,6 +121,19 @@ func (s *Service) letIn(a letInArgs) toolResult {
 		s.Say(s.shareWords(name, a.Email))
 	}
 	return toolResult{text: name + " can now " + verb(access), change: &records.Change{Action: "let in", Component: records.PersonType, ID: done[0].ID, Detail: name + " to " + access, Ops: done}}
+}
+
+// onPerson is the op that sets a field Sameway keeps on the person with
+// that email, making them when there is none yet, and their name.
+func onPerson(p *store.Record, name, email, field string, value any) (records.Op, string) {
+	if p != nil {
+		name, _ = p.Fields["name"].(string)
+		return records.Op{Type: records.PersonType, ID: p.ID, After: map[string]any{field: value}}, name
+	}
+	if name == "" {
+		name, _, _ = strings.Cut(email, "@")
+	}
+	return records.Op{Type: records.PersonType, After: map[string]any{"name": name, "email": email, field: value}}, name
 }
 
 func verb(access string) string {

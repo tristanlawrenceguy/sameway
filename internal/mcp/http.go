@@ -47,15 +47,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := s.connFor(r)
 	ctx = withConn(ctx, c)
 	for _, req := range reqs {
-		result, rpcErr := s.handle(ctx, req)
-		if len(req.ID) == 0 || string(req.ID) == "null" {
-			continue // a notification wants no answer
+		if result, rpcErr := s.handle(ctx, req); !req.notification() {
+			out = append(out, response{JSONRPC: "2.0", ID: req.ID, Result: result, Error: rpcErr})
 		}
-		resp := response{JSONRPC: "2.0", ID: req.ID, Result: result}
-		if rpcErr != nil {
-			resp.Result, resp.Error = nil, rpcErr
-		}
-		out = append(out, resp)
 	}
 	// A client that said who it is gets a session to say it by after.
 	if id := s.sessions.keep(c); id != "" {

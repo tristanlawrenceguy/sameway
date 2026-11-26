@@ -38,10 +38,7 @@ type happened struct {
 func (s *Service) historyWith(raw json.RawMessage) toolResult {
 	var a struct{ Who string }
 	json.Unmarshal(raw, &a)
-	p := s.PersonByEmail(strings.TrimSpace(a.Who))
-	if p == nil {
-		p = s.PersonByName(strings.TrimSpace(a.Who))
-	}
+	p := s.personNamed(a.Who)
 	address := strings.TrimSpace(a.Who)
 	name := address
 	if p != nil {
@@ -80,17 +77,12 @@ func (s *Service) emailsWith(address string) []happened {
 	threads := map[string]bool{}
 	for _, e := range emails {
 		if from, _ := e.Fields["from"].(string); sameAs(from, address) {
-			root, _ := e.Fields["thread"].(string)
-			if root == "" {
-				root = e.ID
-			}
-			threads[root] = true
+			threads[rootOf(e)] = true
 		}
 	}
 	var out []happened
 	for _, e := range emails {
-		root, _ := e.Fields["thread"].(string)
-		if !threads[e.ID] && !threads[root] {
+		if !threads[rootOf(e)] {
 			continue
 		}
 		who := "They wrote"
