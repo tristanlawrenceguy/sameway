@@ -1,7 +1,7 @@
 {
   "name": "text-field",
   "version": "1.0.0",
-  "description": "A single-line text input with a visible label, optional hint, and inline error. For several lines use textarea.",
+  "description": "One line of text, with a visible label. For several lines use textarea.",
   "icon": "▭",
   "use": { "when": "one line of free text.", "not": "several lines, which is a textarea, or a choice, which is a select.", "with": "a form." },
   "props": {
@@ -13,11 +13,11 @@
       "name": { "type": "string", "minLength": 1, "description": "Form field name. Also the default id." },
       "id": { "type": "string" },
       "value": { "type": "string", "default": "" },
-      "type": { "type": "string", "enum": ["text", "email", "url", "search", "number", "password"], "default": "text", "description": "number is drawn as a text field with a number keyboard, not the browser's number field, whose wheel and arrows change it by accident and which drops what it cannot read." },
-      "spellcheck": { "type": "boolean", "default": true, "description": "false for a code, a name to type exactly, or a number, where spelling marks only get in the way." },
-      "hint": { "type": "string", "description": "Help text shown under the label and linked with aria-describedby." },
-      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field says so, and counts down as a person types, rather than stopping them mid-word." },
-      "error": { "type": "string", "description": "Validation message. Sets aria-invalid and is linked with aria-describedby." },
+      "type": { "type": "string", "enum": ["text", "email", "url", "search", "number", "password"], "default": "text", "description": "number is a text field with a number keyboard, not the browser's number field, which changes by accident." },
+      "spellcheck": { "type": "boolean", "default": true, "description": "false for a code, an exact name or a number." },
+      "hint": { "type": "string", "description": "Help text under the label." },
+      "maxlength": { "title": "Most characters", "type": "integer", "minimum": 1, "description": "The most it can hold. The field counts down as a person types and does not stop them mid-word." },
+      "error": { "type": "string", "description": "What is wrong and how to fix it." },
       "required": { "type": "boolean", "default": false },
       "autocomplete": { "type": "string", "description": "HTML autocomplete token such as name or email (1.3.5)." }
     }

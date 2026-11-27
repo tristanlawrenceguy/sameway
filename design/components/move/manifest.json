@@ -1,7 +1,7 @@
 {
   "name": "move",
   "version": "2.0.0",
-  "description": "Moves one record to another choice of a pick-list, such as a task from To do to Done: the choices in a list and a Move button named with the record. It saves like any edit, so it is logged and can be undone, and needs no script.",
+  "description": "Moves one record to another choice of a pick-list, such as a task from To do to Done. The choices and a Move button; a board puts one on each card. It saves like any edit, so it is logged and can be undone, and needs no script.",
   "icon": "⇄",
   "use": {
     "when": "a record sits in a group by a pick-list, as on a board, and a person wants it in another.",
@@ -29,7 +29,7 @@
       },
       "id": {
         "type": "string",
-        "description": "The Move button's id. The form sends it as the place to come back to, so after the move focus returns to this button, in the record's new place, and hears where it went."
+        "description": "The Move button's id, sent as the place to come back to, so focus returns to it after the move."
       },
       "select": {
         "type": "object",

@@ -1,7 +1,7 @@
 {
   "name": "upload",
   "version": "1.1.0",
-  "description": "Adds a file. One field and one button, because a form is the better thing here; the file becomes a record whose contents are read into text the page renders with structure and search finds.",
+  "description": "Adds a file. One field and one button; the file becomes a record, its contents read into text the page shows and search finds.",
   "icon": "⇧",
   "use": { "when": "a person wants to bring a document, a spreadsheet, a web page, a PDF or a picture into the workspace.", "not": "writing something new, which is a note, or a link to something that stays elsewhere, which is a link.", "with": "the files page, where it lives by default, or the header at compact size when a person adds files often." },
   "props": {
@@ -13,8 +13,8 @@
       "action": { "type": "string", "default": "/t/file/upload", "description": "Where the file goes." },
       "from": { "type": "string", "description": "The page to return to afterwards; the file's own page when left out." },
       "id": { "type": "string", "default": "upload", "description": "Id of the field, so the label reaches it." },
-      "hint": { "type": "string", "description": "What files it takes and how big, said before one is chosen. Left out, the kinds Sameway reads and the 4 GB limit."},
-      "sound": { "type": "string", "enum": ["microphone", "computer"], "default": "microphone", "description": "What its Record button hears: computer offers this computer's sound with the microphone, the other people on a call; for a meeting." }
+      "hint": { "type": "string", "description": "What files it takes, said before one is chosen. Left out, the kinds Sameway reads and the 4 GB limit."},
+      "sound": { "type": "string", "enum": ["microphone", "computer"], "default": "microphone", "description": "What its Record button hears. computer adds this computer's sound, the other people on a call, to the microphone." }
     }
   },
   "a11y": {

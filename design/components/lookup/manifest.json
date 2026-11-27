@@ -1,7 +1,7 @@
 {
   "name": "lookup",
   "version": "1.0.0",
-  "description": "Choose one record from many by typing part of its name: the matching records are offered as you type, and the one chosen is what is sent.",
+  "description": "Choose one record from many by typing part of its name. Matches are offered while typing, and the id of the one chosen is sent.",
   "icon": "⌕",
   "use": { "when": "a link to another record when there are too many to list, such as a person out of thousands.", "not": "a short fixed set, which is a select.", "with": "the record's name shown in the box, never its id." },
   "props": {

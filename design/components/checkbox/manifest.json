@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A yes/no choice with a visible label.",
   "icon": "☑",
-  "use": { "when": "a yes or no the person decides.", "not": "showing a state, which is a badge.", "with": "text-field and select, in a form the assistant built because a form was the better thing." },
+  "use": { "when": "a yes or no the person decides.", "not": "showing a state, which is a badge.", "with": "text-field and select, in a form." },
   "props": {
     "type": "object",
     "additionalProperties": false,
@@ -15,8 +15,8 @@
       "value": { "type": "string", "default": "true", "description": "Value sent when checked." },
       "checked": { "type": "boolean", "default": false },
       "hint": { "type": "string" },
-      "required": { "type": "boolean", "default": false, "description": "Only for a box that must be ticked to go on, such as agreeing to something. Says (required) in words." },
-      "error": { "type": "string", "description": "What to do, when the box had to be ticked and was not. Sets aria-invalid and is linked with aria-describedby." }
+      "required": { "type": "boolean", "default": false, "description": "Only for a box that must be ticked to go on, such as agreeing to something." },
+      "error": { "type": "string", "description": "What to do, when the box had to be ticked and was not." }
     }
   },
   "a11y": {

@@ -74,6 +74,7 @@ func TestAssistant(t *testing.T) {
 	set = append(set, payhome()...)
 	set = append(set, actions()...)
 	set = append(set, topics()...)
+	set = append(set, compForms()...)
 	set = append(set, blocks()...)
 	set = append(set, recordWork()...)
 	set = append(set, meetings()...)
