@@ -54,10 +54,49 @@ func (s *Service) moreTools(call llm.ToolCall) toolResult {
 	name := askedFor(call.Args)
 	for _, t := range s.Tools() {
 		if t.Name == name {
-			return toolResult{text: fmt.Sprintf("%s is yours from your next step on: %s", name, t.Description)}
+			return toolResult{text: fmt.Sprintf("%s is yours from your next step on%s: %s", name, takes(t.Schema), t.Description)}
 		}
 	}
 	return fail("there is no tool or topic called %q; more_tools' description lists them", name)
+}
+
+// takes names a tool's arguments, those it must be given first: a model
+// calls from this answer before it has read the tool's schema, and
+// guessed more_tools' own "name" for another tool's "key".
+func takes(schema map[string]any) string {
+	props, _ := schema["properties"].(map[string]any)
+	if len(props) == 0 {
+		return ""
+	}
+	must := map[string]bool{}
+	switch req := schema["required"].(type) {
+	case []string:
+		for _, r := range req {
+			must[r] = true
+		}
+	case []any:
+		for _, r := range req {
+			must[fmt.Sprint(r)] = true
+		}
+	}
+	var need, may []string
+	for k := range props {
+		if must[k] {
+			need = append(need, k)
+		} else {
+			may = append(may, k)
+		}
+	}
+	sort.Strings(need)
+	sort.Strings(may)
+	var parts []string
+	if len(need) > 0 {
+		parts = append(parts, "needs "+strings.Join(need, ", "))
+	}
+	if len(may) > 0 {
+		parts = append(parts, "takes "+strings.Join(may, ", "))
+	}
+	return " (" + strings.Join(parts, "; ") + ")"
 }
 
 // MoreTool is more_tools for a turn given these of all the tools, as MCP

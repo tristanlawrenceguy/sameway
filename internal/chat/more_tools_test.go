@@ -35,4 +35,10 @@ func TestTheRestIsFoundByName(t *testing.T) {
 	if next, _ := offered(m.seen[1]); !strings.Contains(next, ",set_setting,") {
 		t.Errorf("asked for, set_setting is given from the next step: %s", next)
 	}
+	// The answer names the tool's arguments: a model calls from it, and
+	// guessed more_tools' own "name" for set_setting's "key".
+	msgs := m.seen[1].Messages
+	if said := msgs[len(msgs)-1].ToolResults[0].Content; !strings.Contains(said, "set_setting is yours from your next step on (needs key, value)") {
+		t.Errorf("the answer names what the tool takes: %s", said)
+	}
 }
