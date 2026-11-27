@@ -1,7 +1,7 @@
 {
   "name": "media",
   "version": "2.2.0",
-  "description": "A recording, heard or seen, with its words: played with text-labelled controls (Play, Back 15 seconds, Forward 30 seconds, speed, a seek bar that says where it is in words), its length and size, a Download link, and its transcript under it, each line leading to the moment it was said and marked while it is heard. A video shows its transcript as captions too.",
+  "description": "A recording, heard or seen, with its words. It has a player with text-labelled controls, a Download link, and its transcript under it, each line leading to the moment it was said. A video shows its transcript as captions too.",
   "icon": "♪",
   "use": {
     "when": "a voice note, a meeting, a podcast, music or a video is part of what the page holds: a file's own page, a note's recording.",
@@ -67,7 +67,7 @@
             },
             "anchor": {
               "type": "string",
-              "description": "The whole second it starts at, for a link to this line: #<id>-at-<anchor> scrolls to it, and plays from it with scripts. The first line in a second has it."
+              "description": "The whole second it starts at, for a link to this line (#<id>-at-<anchor>). The first line in a second has it."
             }
           }
         },
@@ -86,7 +86,7 @@
         "required": [
           "action"
         ],
-        "description": "Write it down now: where the recording's sound is sent to be written down on this computer. With auto, the page's script does it as soon as the page opens.",
+        "description": "Where the sound is sent to be written down on this computer; with auto, as soon as the page opens.",
         "properties": {
           "action": {
             "type": "string",
@@ -132,7 +132,7 @@
       },
       "downloads": {
         "type": "array",
-        "description": "The transcript as files to take away, shown with the export component: subtitles (format srt) and plain text (format txt).",
+        "description": "The transcript as files to take away: subtitles (srt) and plain text (txt).",
         "items": {
           "type": "object",
           "additionalProperties": false,

@@ -14,7 +14,7 @@
       "caption": { "type": "string", "description": "Seen by everyone, under the picture." },
       "width": { "type": "integer", "minimum": 1, "description": "Its width in pixels, when known, so the page does not jump as it loads." },
       "height": { "type": "integer", "minimum": 1 },
-      "loading": { "type": "string", "enum": ["lazy", "eager"], "default": "lazy", "description": "eager for a picture seen as the page opens, such as the first thing on it; lazy waits until it is scrolled near." },
+      "loading": { "type": "string", "enum": ["lazy", "eager"], "default": "lazy", "description": "eager for a picture seen as the page opens; lazy waits until it is scrolled near." },
       "still": { "type": "string", "description": "A still picture of one that moves, shown first; with scripts a Play button shows it moving and Stop stills it." },
       "id": { "type": "string" }
     }

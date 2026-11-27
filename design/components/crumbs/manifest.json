@@ -26,7 +26,7 @@
         }
       },
       "current": { "type": "string", "description": "This page's name, marked as the current page. Leave out when the heading below says it." },
-      "label": { "type": "string", "default": "Breadcrumb", "description": "Names the navigation landmark. Breadcrumb is the name screen reader users know it by; You are here would say they are on the place it leads back to." }
+      "label": { "type": "string", "default": "Breadcrumb", "description": "Names the navigation landmark; Breadcrumb is the name screen reader users know." }
     }
   },
   "a11y": {

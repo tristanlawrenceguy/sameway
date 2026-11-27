@@ -85,4 +85,5 @@ func TestAnEventIsWrittenUpInPlace(t *testing.T) {
 		t.Errorf("undo puts it back as it was: %v", back.Fields)
 	}
 	refused(t, svc, "write_up_meeting", map[string]any{"summary": "Nothing to write it on."}, "give the event")
+	refused(t, svc, "write_up_meeting", map[string]any{"event": ev.ID}, "give the summary")
 }

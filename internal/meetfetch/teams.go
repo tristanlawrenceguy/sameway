@@ -44,19 +44,7 @@ type DeviceCode struct {
 	ExpiresIn       int    `json:"expires_in"`
 }
 
-func (t *Teams) client() *http.Client {
-	if t.Client != nil {
-		return t.Client
-	}
-	return http.DefaultClient
-}
-
-func (t *Teams) tenant() string {
-	if t.Tenant == "" {
-		return "organizations"
-	}
-	return t.Tenant
-}
+func (t *Teams) tenant() string { return or(t.Tenant, "organizations") }
 
 // Begin asks Microsoft for a code for the person to sign in with.
 func (t *Teams) Begin(ctx context.Context) (*DeviceCode, error) {
@@ -173,7 +161,7 @@ func (t *Teams) post(ctx context.Context, to string, form url.Values, out any) e
 		return err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	return answer(t.client(), req, out)
+	return answer(t.Client, req, out)
 }
 
 func (t *Teams) get(ctx context.Context, tok, to string, out any) error {
@@ -185,29 +173,50 @@ func (t *Teams) get(ctx context.Context, tok, to string, out any) error {
 }
 
 func (t *Teams) raw(ctx context.Context, tok, to string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, to, nil)
+	body, status, err := fetch(ctx, t.Client, tok, to)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+tok)
-	res, err := t.client().Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, _ := io.ReadAll(io.LimitReader(res.Body, 64<<20))
-	if res.StatusCode == http.StatusForbidden && strings.Contains(string(body), "SpeakerAttributionNotAllowed") {
+	if status == http.StatusForbidden && strings.Contains(string(body), "SpeakerAttributionNotAllowed") {
 		return nil, errors.New("the organisation's Teams policy keeps speaker names out of transcripts, so Graph will not give it this way")
 	}
-	if res.StatusCode >= 300 {
-		return nil, fmt.Errorf("Microsoft Graph answered %s: %s", res.Status, trim.Clip(string(body), 300))
+	if status >= 300 {
+		return nil, fmt.Errorf("Microsoft Graph answered %d: %s", status, trim.Clip(string(body), 300))
 	}
 	return body, nil
 }
 
+// fetch gets an address as the person signed in: what it answered, and
+// its status.
+func fetch(ctx context.Context, c *http.Client, tok, to string) ([]byte, int, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, to, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	req.Header.Set("Authorization", "Bearer "+tok)
+	res, err := client(c).Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer res.Body.Close()
+	body, err := io.ReadAll(io.LimitReader(res.Body, 64<<20))
+	if err != nil {
+		return nil, 0, errors.New("the answer did not arrive whole")
+	}
+	return body, res.StatusCode, nil
+}
+
+// client is the one set, or Go's own.
+func client(c *http.Client) *http.Client {
+	if c != nil {
+		return c
+	}
+	return http.DefaultClient
+}
+
 // answer reads a token endpoint's answer, or its error.
 func answer(c *http.Client, req *http.Request, out any) error {
-	res, err := c.Do(req)
+	res, err := client(c).Do(req)
 	if err != nil {
 		return err
 	}
