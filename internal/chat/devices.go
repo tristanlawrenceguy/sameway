@@ -10,8 +10,8 @@ import (
 // (automate.SwitchDevice), the owner's alone, as the hub is.
 
 var deviceOp = Op{Title: "Turn a device on or off", Traits: Traits{Idempotent: true, OpenWorld: true},
-	Access: ForOwner,
-	Doing:  saying("Switching a device"),
+	Access: ForOwner, With: home.DeviceType,
+	Doing: saying("Switching a device"),
 	Offered: func(s *Service, _ *llm.Tool) bool {
 		_, ok := s.Store.Types().Get(home.DeviceType)
 		return ok

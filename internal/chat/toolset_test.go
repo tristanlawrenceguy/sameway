@@ -52,3 +52,27 @@ func TestAModelIsGivenTheToolsATurnNeeds(t *testing.T) {
 		t.Errorf("a tool the conversation used stays: %s", followUp)
 	}
 }
+
+// A tool that works on one kind of thing is given once the workspace has
+// one, without being asked for: by what is there, not by what was said.
+func TestAToolIsGivenOnceTheWorkspaceHoldsWhatItWorksOn(t *testing.T) {
+	t.Parallel()
+	svc := newFullService(t)
+	given := func() bool {
+		for _, tool := range svc.ToolsFor(svc.Tools(), []llm.Message{{Role: llm.RoleUser, Content: "Hello"}}) {
+			if tool.Name == "switch_device" {
+				return true
+			}
+		}
+		return false
+	}
+	if given() {
+		t.Fatal("switch_device is given with no device to switch")
+	}
+	if _, err := svc.Store.Create("device", map[string]any{"name": "kitchen light", "topic": "zigbee2mqtt/kitchen_light"}); err != nil {
+		t.Fatal(err)
+	}
+	if !given() {
+		t.Error("with a device in the workspace, switch_device is not given")
+	}
+}

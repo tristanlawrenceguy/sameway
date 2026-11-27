@@ -13,7 +13,7 @@ package main
 var longFuncs = map[string]int{
 	"internal/app.Description.part":        95,
 	"internal/chat.Service.sendTurn":       98,
-	"internal/chat.Service.writeUpMeeting": 84,
+	"internal/chat.Service.writeUpMeeting": 83,
 	"internal/cli.ctx.contentCmd":          103,
 	"internal/convert.pptx":                91,
 	"internal/discover.Browse":             115,

@@ -19,6 +19,9 @@ type Op struct {
 	Traits
 	Access Access
 	Core   bool // given to a small model here every turn (toolset.go)
+	// With is the content type it works on: it is given, unasked, once
+	// the workspace has a record of that type (toolset.go).
+	With string
 	// Doing says a call in a few words a person watches go by while it
 	// runs, from what the call makes and of what (doing.go).
 	Doing func(a callArgs) string
