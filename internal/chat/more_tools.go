@@ -89,14 +89,14 @@ func takes(schema map[string]any) string {
 	}
 	sort.Strings(need)
 	sort.Strings(may)
-	out := ""
+	var parts []string
 	if len(need) > 0 {
-		out = ", needs " + strings.Join(need, ", ")
+		parts = append(parts, "needs "+strings.Join(need, ", "))
 	}
 	if len(may) > 0 {
-		out += ", takes " + strings.Join(may, ", ")
+		parts = append(parts, "takes "+strings.Join(may, ", "))
 	}
-	return " (its arguments" + out[1:] + ")"
+	return " (" + strings.Join(parts, "; ") + ")"
 }
 
 // MoreTool is more_tools for a turn given these of all the tools, as MCP
