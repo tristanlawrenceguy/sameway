@@ -3,9 +3,9 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"strings"
 
+	"github.com/tristanlawrenceguy/sameway/internal/jsontext"
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
 	"github.com/tristanlawrenceguy/sameway/internal/records"
 	"github.com/tristanlawrenceguy/sameway/internal/schema"
@@ -31,17 +31,22 @@ type Reshaper interface {
 
 var changeFieldOp = Op{Title: "Change or remove a field", Traits: Traits{Destructive: true},
 	Doing: reshaping,
-	Run:   func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.reshapeCall(call.Args) },
+	// The call as it came, since a proposal's answer runs it agreed.
+	Run: func(s *Service, _ toolArgs, call llm.ToolCall) toolResult {
+		var a reshapeArgs
+		json.Unmarshal(call.Args, &a)
+		return s.reshape(a)
+	},
 	Tool: llm.Tool{
 		Name:        "change_field",
-		Description: "Change a content type the person already has: add_choice gives a pick-list (enum) another choice (value, and label for how it reads); label renames how a field, or with value one of its choices, is shown (its name and what is stored stay); hide takes a field, or with no field the whole type, off the pages and out of your hands while keeping everything it holds; show brings it back; delete removes a field, or with no field the whole type and its records, on every computer that hosts the workspace. Delete is always put to the person as a question with hiding offered first; nothing is deleted until they choose. When someone asks to remove something, offer hiding.",
-		Schema: map[string]any{"type": "object", "additionalProperties": false, "required": []string{"type", "change"}, "properties": map[string]any{
+		Description: "Change a content type the person already has. change is one of: add_choice gives a pick-list (enum) another choice; label renames how a field, or with value one of its choices, is shown (what is stored stays); hide takes a field, or with no field the whole type, off the pages and out of your hands, keeping everything it holds; show brings it back; delete removes a field, or with no field the whole type and its records, for good. Delete is always put to the person as a question, with hiding offered; nothing is deleted until they choose. When someone asks to remove something, offer hiding.",
+		Schema: obj(map[string]any{
 			"type":   map[string]any{"type": "string", "description": "The content type."},
 			"field":  map[string]any{"type": "string", "description": "The field; leave out to hide, show or delete the whole type."},
 			"change": map[string]any{"type": "string", "enum": []string{"add_choice", "label", "hide", "show", "delete"}},
 			"value":  map[string]any{"type": "string", "description": "add_choice: the choice. label: the choice to rename, when renaming a choice."},
 			"label":  map[string]any{"type": "string", "description": "How it reads: the new label, or the new choice's label."},
-		}},
+		}, "type", "change"),
 	}, Offered: func(s *Service, _ *llm.Tool) bool { return s.Reshape != nil }}
 
 type reshapeArgs struct {
@@ -51,13 +56,6 @@ type reshapeArgs struct {
 	Value  string `json:"value"`
 	Label  string `json:"label"`
 	Agreed bool   `json:"agreed"`
-}
-
-// reshapeCall is the assistant's call; a proposal's answer runs it agreed.
-func (s *Service) reshapeCall(raw json.RawMessage) toolResult {
-	var a reshapeArgs
-	json.Unmarshal(raw, &a)
-	return s.reshape(a)
 }
 
 func (s *Service) reshape(a reshapeArgs) toolResult {

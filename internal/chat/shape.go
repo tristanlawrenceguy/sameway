@@ -2,6 +2,7 @@ package chat
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/tristanlawrenceguy/sameway/internal/llm"
@@ -29,13 +30,20 @@ func (d fieldDef) field() schema.Field {
 }
 
 var fieldProps = map[string]any{
-	"name":        map[string]any{"type": "string", "description": "Lowercase letters, digits and underscores, such as due or priority."},
-	"kind":        map[string]any{"type": "string", "enum": schema.FieldTypes, "description": "string is a line of text, text a paragraph, markdown structured text, datetime a day or a moment, repeat how often it happens again (every Tuesday), enum one of values, list several strings, ref another record's id (say which type in to), bool yes or no."},
-	"description": map[string]any{"type": "string", "description": "What the field is for, in a few words: shown to people and to you."},
+	"name":        map[string]any{"type": "string", "description": "Lowercase, with underscores, such as due or first_seen."},
+	"kind":        map[string]any{"type": "string", "enum": schema.FieldTypes, "description": "string is a line, text a paragraph, datetime a day or a moment, repeat how often it happens again, enum one of values, list several strings, ref another record (its type in to)."},
+	"description": map[string]any{"type": "string", "description": "What it is for, in a few words."},
 	"values":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "For enum: the choices."},
-	"to":          map[string]any{"type": "string", "description": "For ref: the content type it points at."},
+	"to":          map[string]any{"type": "string", "description": "For ref: the type it points at."},
 	"required":    map[string]any{"type": "boolean"},
 	"default":     map[string]any{"description": "What a record has when nothing was given."},
+}
+
+// addFieldProps are a field's properties and the type it goes on.
+func addFieldProps() map[string]any {
+	props := maps.Clone(fieldProps)
+	props["type"] = map[string]any{"type": "string", "description": "The content type to add the field to."}
+	return props
 }
 
 var shapeOps = []Op{
@@ -44,23 +52,14 @@ var shapeOps = []Op{
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addField(a.Type, fieldDef{Name: a.Name, Kind: a.Kind, Description: a.Description, Values: a.Values, To: a.To, Required: a.Required, Default: a.Default})
 		},
-		Tool: llm.Tool{Name: "add_field", Description: "Add a property to a content type, for everyone: a due date on notes, a priority on tasks. The type's schema file and its table change at once, and every record has the field from then on: the ones already there read as its default (nothing, when it has none), and the answer says how many there are and what they got. Adding is safe; nothing else they hold changes.",
-			Schema: obj(map[string]any{
-				"type":        map[string]any{"type": "string", "description": "The content type to add the field to."},
-				"name":        fieldProps["name"],
-				"kind":        fieldProps["kind"],
-				"description": fieldProps["description"],
-				"values":      fieldProps["values"],
-				"to":          fieldProps["to"],
-				"required":    fieldProps["required"],
-				"default":     fieldProps["default"],
-			}, "type", "name", "kind")}},
+		Tool: llm.Tool{Name: "add_field", Description: "Add a property to a content type, for everyone, by type, name and kind: a due date on notes is a datetime, a priority on tasks an enum with its values. Records already there read as its default, or nothing; the answer says what they got.",
+			Schema: obj(addFieldProps(), "type", "name", "kind")}},
 	{Title: "Add a kind of record",
 		Doing: reshaping,
 		Run: func(s *Service, a toolArgs, call llm.ToolCall) toolResult {
 			return s.addType(a.Name, a.Description, a.Properties)
 		},
-		Tool: llm.Tool{Name: "add_type", Description: "Make a new content type, for everyone: a kind of thing the person keeps, such as habit, contact or recipe, with its own page at /t/<name>, its own records and its own fields. Give the title field first.",
+		Tool: llm.Tool{Name: "add_type", Description: "Make a new content type, for everyone: a kind of thing the person keeps, such as contact or recipe, with its own fields, records and page at /t/<name>.",
 			Schema: obj(map[string]any{
 				"name":        map[string]any{"type": "string", "description": "Singular, lowercase, such as contact."},
 				"description": map[string]any{"type": "string", "description": "One sentence: what one of these is."},

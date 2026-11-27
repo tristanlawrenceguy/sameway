@@ -77,6 +77,7 @@ func TestAssistant(t *testing.T) {
 	set = append(set, compForms()...)
 	set = append(set, blocks()...)
 	set = append(set, recordWork()...)
+	set = append(set, shapes()...)
 	set = append(set, meetings()...)
 	switch os.Getenv("SAMEWAY_BENCH_SET") {
 	case "newcomer":

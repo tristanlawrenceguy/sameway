@@ -21,7 +21,7 @@ var settingOp = Op{Title: "Change a setting", Traits: Traits{Idempotent: true},
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.setSetting(a.Key, a.Value) },
 	Tool: llm.Tool{
 		Name:        "set_setting",
-		Description: "Change one setting of this workspace when the person asks for it, and say so. Most are reversible and happen at once; the few that send the conversation or a secret somewhere else, let a program run, or open the workspace to others cannot be taken back, so calling this puts the question to the person for you and nothing changes until they say yes. The settings: " + workspace.SettingsDoc() + ". A setting that holds a key or a token takes the NAME of the environment variable that holds it, never the key.",
+		Description: "Change one setting of this workspace, by key and value, when the person asks for it, and say so. Most happen at once and can be undone; one that sends the conversation or a secret somewhere else, lets a program run, or opens the workspace to others cannot be taken back, so this call puts it to the person and nothing changes until they say yes. The settings: " + workspace.SettingsDoc() + ". The other keys set up a model, devices or a meeting service; one ending _env takes the NAME of an environment variable, never the key or token itself.",
 		Schema: obj(map[string]any{
 			"key":   map[string]any{"type": "string", "enum": workspace.SettingKeys()},
 			"value": map[string]any{"type": "string"},

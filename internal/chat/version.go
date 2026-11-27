@@ -20,10 +20,10 @@ var updateOp = Op{Title: "Update Sameway", Traits: Traits{OpenWorld: true},
 	Run:    func(s *Service, a toolArgs, call llm.ToolCall) toolResult { return s.updateSameway(a.Install) },
 	Tool: llm.Tool{
 		Name:        "update_sameway",
-		Description: "Look for a new version of the sameway program itself. With install true, install it when there is one; without, only say whether there is. Say what came back word for word: a new version runs once Sameway restarts, which the page offers with Restart Sameway. Not for content and not for the canvas.",
-		Schema: map[string]any{"type": "object", "properties": map[string]any{
-			"install": map[string]any{"type": "boolean", "description": "true when the person asked to update or upgrade; false when they only asked whether a new version is out."},
-		}, "additionalProperties": false},
+		Description: "Look for a new version of the Sameway program itself, and with install true, install it. Say what comes back word for word.",
+		Schema: obj(map[string]any{
+			"install": map[string]any{"type": "boolean", "description": "true when the person asked to update; leave out when they only asked whether a new version is out."},
+		}),
 	}}
 
 // updateSameway looks for a new version, and installs it when the person

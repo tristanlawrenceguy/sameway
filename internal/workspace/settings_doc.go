@@ -7,10 +7,11 @@ import "strings"
 // it is, in its first words (how changes arrive; how large the words are),
 // which is how a model finds the one a person means; the technical ones,
 // that only someone setting up a model, a broker or a meeting service
-// sets, by their key alone. The whole of what one is for comes back with
-// a refusal (SettingDoc), for the one tried, not all of them every time.
+// sets, are in the tool's list of keys and said here only when they are
+// a choice. The whole of what one is for comes back with a refusal
+// (SettingDoc), for the one tried, not all of them every time.
 
-// technical are the settings named rather than said whole.
+// technical are the settings not said here.
 var technical = []string{"server.", "llm.", "mcp.", "mqtt.", "meetings.", "actions.", "chat.", "notify.command", "backup.folder", "update.mode", "tailnet.peers"}
 
 func isTechnical(key string) bool {
@@ -22,24 +23,24 @@ func isTechnical(key string) bool {
 	return false
 }
 
-// SettingsDoc says each setting in a line, for a tool's description: the
-// ones a person asks for by what they are, the technical ones by key, and
-// what each takes.
+// SettingsDoc says the settings in a line each, for a tool's description:
+// the ones a person asks for by what they are, and the choices of any
+// that is a choice.
 func SettingsDoc() string {
-	var b strings.Builder
-	for i, s := range Settings {
-		if i > 0 {
-			b.WriteString("; ")
-		}
-		b.WriteString(s.Key)
+	var said []string
+	for _, s := range Settings {
+		what := ""
 		if !isTechnical(s.Key) {
-			b.WriteString(": " + firstPart(s.Doc))
+			what = ": " + firstPart(s.Doc)
 		}
 		if s.Kind == "enum" {
-			b.WriteString(" (" + strings.Join(s.Values, ", ") + ")")
+			what += " (" + strings.TrimPrefix(strings.Join(s.Values, ", "), ", ") + ")"
+		}
+		if what != "" {
+			said = append(said, s.Key+what)
 		}
 	}
-	return b.String()
+	return strings.Join(said, "; ")
 }
 
 // SettingDoc is what one setting is for, said whole, or "".
