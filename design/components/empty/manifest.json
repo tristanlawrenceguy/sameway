@@ -1,7 +1,7 @@
 {
   "name": "empty",
   "version": "1.1.0",
-  "description": "What a place says when there is nothing in it yet: a sentence, a heading when it is the whole page's news, and the one thing to do next as a link.",
+  "description": "What a place says when there is nothing in it yet. It is a sentence, a heading if wanted, and the one thing to do next as a link.",
   "icon": "○",
   "use": { "when": "a list, a search, a canvas or a conversation has nothing to show.", "not": "an error, which is an alert, or a result that is simply short.", "with": "the action that fills it, named for what it does rather than \"here\"." },
   "props": {
@@ -9,7 +9,7 @@
     "additionalProperties": false,
     "required": ["message"],
     "properties": {
-      "quiet": {"type": "boolean", "default": false, "description": "One muted line with no panel, for a part of something with nothing in it: a day, a column, a list on the canvas. Collection, calendar, chart, clock, tracker and table say their nothing this way."},
+      "quiet": {"type": "boolean", "default": false, "description": "One muted line with no panel, for a part with nothing in it: a day, a column, a list on the canvas."},
       "title": { "type": "string", "description": "A short heading, such as No notes yet. Leave out when the page's own heading already says it." },
       "level": { "title": "Heading level", "type": "integer", "minimum": 2, "maximum": 4, "default": 2, "description": "Where the heading sits in the page outline." },
       "message": { "type": "string", "minLength": 1, "description": "One sentence: what would be here, and how it gets here." },
@@ -23,7 +23,7 @@
           "label": { "type": "string", "description": "Says what the link does on its own, such as Ask the assistant; never here." }
         }
       },
-      "live": { "type": "boolean", "default": false, "description": "Announce it as a status, only when a script puts it into a page already open, as an answer just asked for. A status that arrives with a new page is not announced; say the outcome in the page title then." }
+      "live": { "type": "boolean", "default": false, "description": "Announce it as a status: only when a script puts it into a page already open." }
     }
   },
   "a11y": {

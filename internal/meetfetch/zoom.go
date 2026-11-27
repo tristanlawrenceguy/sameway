@@ -3,9 +3,7 @@ package meetfetch
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -21,13 +19,6 @@ type Zoom struct {
 	AccountID, ClientID, Secret string
 	Client                      *http.Client
 	At                          At // where Zoom answers; at.go
-}
-
-func (z *Zoom) client() *http.Client {
-	if z.Client != nil {
-		return z.Client
-	}
-	return http.DefaultClient
 }
 
 // Ready says whether everything Zoom needs is set.
@@ -53,7 +44,7 @@ func (z *Zoom) token(ctx context.Context) (string, error) {
 	}
 	req.SetBasicAuth(z.ClientID, z.Secret)
 	var tok tokenAnswer
-	if err := answer(z.client(), req, &tok); err != nil {
+	if err := answer(z.Client, req, &tok); err != nil {
 		return "", fmt.Errorf("Zoom would not sign in with the account id, client id and secret set (%v)", err)
 	}
 	return tok.AccessToken, nil
@@ -66,7 +57,7 @@ func (z *Zoom) Transcript(ctx context.Context, meeting string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, status, err := z.get(ctx, tok, z.At.zoomAPI()+"/meetings/"+url.PathEscape(meeting)+"/recordings")
+	body, status, err := fetch(ctx, z.Client, tok, z.At.zoomAPI()+"/meetings/"+url.PathEscape(meeting)+"/recordings")
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +79,7 @@ func (z *Zoom) Transcript(ctx context.Context, meeting string) ([]byte, error) {
 	}
 	for _, f := range rec.Files {
 		if strings.EqualFold(f.Type, "TRANSCRIPT") && (f.Status == "" || strings.EqualFold(f.Status, "completed")) {
-			vtt, status, err := z.get(ctx, tok, f.Download)
+			vtt, status, err := fetch(ctx, z.Client, tok, f.Download)
 			if err != nil {
 				return nil, err
 			}
@@ -99,22 +90,4 @@ func (z *Zoom) Transcript(ctx context.Context, meeting string) ([]byte, error) {
 		}
 	}
 	return nil, ErrNotYet
-}
-
-func (z *Zoom) get(ctx context.Context, tok, to string) ([]byte, int, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, to, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	req.Header.Set("Authorization", "Bearer "+tok)
-	res, err := z.client().Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(io.LimitReader(res.Body, 64<<20))
-	if err != nil {
-		return nil, 0, errors.New("the transcript did not arrive whole")
-	}
-	return body, res.StatusCode, nil
 }

@@ -40,7 +40,7 @@
             },
             "here": {
               "type": "boolean",
-              "description": "On the same page as the one reading: said as 'on this page', and, arriving while the page is open, heard once."
+              "description": "On the same page as the reader: said as 'on this page'."
             }
           }
         },
