@@ -20,7 +20,8 @@ import (
 // the rules of every topic are given every turn (rules.go).
 
 // toolsFor is the tools a turn is given: the core, and those the
-// conversation has called or more_tools brought.
+// conversation has called or more_tools brought, and those whose kind of
+// record the workspace holds.
 func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 	did := calledSo(history) // rules.go
 	// The core comes first and in the same order every turn, so what a
@@ -31,7 +32,7 @@ func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 		switch {
 		case opNamed(t.Name).Core:
 			core = append(core, t)
-		case did[t.Name]:
+		case did[t.Name], s.holds(opNamed(t.Name).With):
 			more = append(more, t)
 		}
 	}
@@ -40,6 +41,20 @@ func (s *Service) toolsFor(all []llm.Tool, history []llm.Message) []llm.Tool {
 		given = append(given, t)
 	}
 	return given
+}
+
+// holds is whether the workspace has a record of that type. A tool that
+// works on one kind of thing (switch_device on a device, write_up_meeting
+// on an event) is given once
+// there is one: a model asked to turn a light on did not ask more_tools
+// for it a third of the time, and made do with update_record. It goes by
+// what the workspace holds, never by the words of the message.
+func (s *Service) holds(typ string) bool {
+	if typ == "" {
+		return false
+	}
+	n, err := s.Store.Count(typ)
+	return err == nil && n > 0
 }
 
 // refresh is a turn's next step's prompt and tools: the page as it is now,

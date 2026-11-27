@@ -49,7 +49,7 @@ var meetingOps = []Op{{Title: "Write up a meeting",
 				"due":   map[string]any{"type": "string", "description": "When it is due, when one was said, as a date."},
 				"for":   map[string]any{"type": "string", "description": "The person id it is for, when it was said who; find_records on person."},
 			}, "title")},
-		}, "summary")}, Offered: has(records.EventType)}}
+		}, "summary")}, Offered: has(records.EventType), With: records.EventType}}
 
 func (s *Service) writeUpMeeting(eventID, fileID, summary string, decisions, tasks []meetingItem) toolResult {
 	if eventID == "" && fileID == "" {
