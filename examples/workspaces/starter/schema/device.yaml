@@ -2,7 +2,7 @@
 # per topic the workspace subscribes to (mqtt.subscribe in workspace.yaml),
 # made by the system when its first message arrives and kept current.
 name: device
-description: "A device reached over MQTT: the topic it speaks on, its latest state as it said it, and when it was last heard. An mqtt action publishes to a topic to change it."
+description: "A device reached over MQTT: the topic it speaks on, its latest state as it said it, and when it was last heard. switch_device turns one on or off; an mqtt action publishes anything else to a topic."
 title: name
 provided: true
 fields:
